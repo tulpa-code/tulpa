@@ -22,12 +22,12 @@ const diag = `╱`
 
 // Opts are the options for rendering the Tulpa title art.
 type Opts struct {
-	FieldColor   color.Color // diagonal lines
-	TitleColorA  color.Color // left gradient ramp point
-	TitleColorB  color.Color // right gradient ramp point
-	CharmColor   color.Color // Charm™ text color
-	VersionColor color.Color // Version text color
-	Width        int         // width of the rendered logo, used for truncation
+	FieldColor    color.Color // diagonal lines
+	TitleColorA   color.Color // left gradient ramp point
+	TitleColorB   color.Color // right gradient ramp point
+	SubtitleColor color.Color // Subtitle text color
+	VersionColor  color.Color // Version text color
+	Width         int         // width of the rendered logo, used for truncation
 }
 
 // Render renders the Tulpa logo. Set the argument to true to render the narrow
@@ -36,7 +36,7 @@ type Opts struct {
 // The compact argument determines whether it renders compact for the sidebar
 // or wider for the main pane.
 func Render(version string, compact bool, o Opts) string {
-	const charm = " Charm™"
+	const tulpaTag = " AI"
 
 	fg := func(c color.Color, s string) string {
 		return lipgloss.NewStyle().Foreground(c).Render(s)
@@ -66,10 +66,10 @@ func Render(version string, compact bool, o Opts) string {
 
 	// Charm and version.
 	metaRowGap := 1
-	maxVersionWidth := tulpaWidth - lipgloss.Width(charm) - metaRowGap
+	maxVersionWidth := tulpaWidth - lipgloss.Width(tulpaTag) - metaRowGap
 	version = ansi.Truncate(version, maxVersionWidth, "…") // truncate version if too long.
-	gap := max(0, tulpaWidth-lipgloss.Width(charm)-lipgloss.Width(version))
-	metaRow := fg(o.CharmColor, charm) + strings.Repeat(" ", gap) + fg(o.VersionColor, version)
+	gap := max(0, tulpaWidth-lipgloss.Width(tulpaTag)-lipgloss.Width(version))
+	metaRow := fg(o.SubtitleColor, tulpaTag) + strings.Repeat(" ", gap) + fg(o.VersionColor, version)
 
 	// Join the meta row and big Tulpa title.
 	tulpa = strings.TrimSpace(metaRow + "\n" + tulpa)
@@ -120,8 +120,8 @@ func Render(version string, compact bool, o Opts) string {
 // smaller windows or sidebar usage.
 func SmallRender(width int) string {
 	t := styles.CurrentTheme()
-	title := t.S().Base.Foreground(t.Secondary).Render("Charm™")
-	title = fmt.Sprintf("%s %s", title, styles.ApplyBoldForegroundGrad("Tulpa", t.Secondary, t.Primary))
+	title := t.S().Base.Foreground(t.Secondary).Render("Tulpa")
+	title = fmt.Sprintf("%s %s", title, styles.ApplyBoldForegroundGrad("AI", t.Secondary, t.Primary))
 	remainingWidth := width - lipgloss.Width(title) - 1 // 1 for the space after "Tulpa"
 	if remainingWidth > 0 {
 		lines := strings.Repeat("╱", remainingWidth)

@@ -156,7 +156,7 @@ func (b *bashTool) bashDescription() string {
 			attributionParts = append(attributionParts, "💘 Generated with Tulpa")
 		}
 		if coAuthoredBy {
-			attributionParts = append(attributionParts, "Co-Authored-By: Tulpa <tulpa@charm.land>")
+			attributionParts = append(attributionParts, "Co-Authored-By: Tulpa <team@tulpa.dev>")
 		}
 
 		if len(attributionParts) > 0 {

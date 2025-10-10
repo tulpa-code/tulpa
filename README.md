@@ -122,39 +122,12 @@ You can use these modules directly in your flake by importing them from NUR. Sin
 
 </details>
 
-<details>
-<summary><strong>Debian/Ubuntu</strong></summary>
-
-```bash
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
-echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-sudo apt update && sudo apt install crush
-```
-
-</details>
-
-<details>
-<summary><strong>Fedora/RHEL</strong></summary>
-
-```bash
-echo '[charm]
-name=Charm
-baseurl=https://repo.charm.sh/yum/
-enabled=1
-gpgcheck=1
-gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
-sudo yum install crush
-```
-
-</details>
-
 Or, download it:
 
 - [Packages][releases] are available in Debian and RPM formats
 - [Binaries][releases] are available for Linux, macOS, Windows, FreeBSD, OpenBSD, and NetBSD
 
-[releases]: https://github.com/charmbracelet/crush/releases
+[releases]: https://github.com/tulpa-code/tulpa/releases
 
 Or just install it with Go:
 
@@ -239,7 +212,7 @@ like you would. LSPs can be added manually like so:
 
 ```json
 {
-  "$schema": "https://charm.land/crush.json",
+
   "lsp": {
     "go": {
       "command": "gopls",
@@ -267,7 +240,7 @@ using `$(echo $VAR)` syntax.
 
 ```json
 {
-  "$schema": "https://charm.land/crush.json",
+
   "mcp": {
     "filesystem": {
       "type": "stdio",
@@ -319,7 +292,7 @@ permissions. Use this with care.
 
 ```json
 {
-  "$schema": "https://charm.land/crush.json",
+
   "permissions": {
     "allowed_tools": [
       "view",
@@ -342,7 +315,7 @@ it creates. You can customize this behavior with the `attribution` option:
 
 ```json
 {
-  "$schema": "https://charm.land/crush.json",
+
   "options": {
     "attribution": {
       "co_authored_by": true,
@@ -352,7 +325,7 @@ it creates. You can customize this behavior with the `attribution` option:
 }
 ```
 
-- `co_authored_by`: When true (default), adds `Co-Authored-By: Crush <crush@charm.land>` to commit messages
+- `co_authored_by`: When true (default), adds `Co-Authored-By: Tulpa <team@tulpa.dev>` to commit messages
 - `generated_with`: When true (default), adds `💘 Generated with Crush` line to commit messages and PR descriptions
 
 ### Local Models
@@ -415,7 +388,7 @@ API. Don't forget to set `DEEPSEEK_API_KEY` in your environment.
 
 ```json
 {
-  "$schema": "https://charm.land/crush.json",
+
   "providers": {
     "deepseek": {
       "type": "openai",
@@ -444,7 +417,7 @@ Custom Anthropic-compatible providers follow this format:
 
 ```json
 {
-  "$schema": "https://charm.land/crush.json",
+
   "providers": {
     "custom-anthropic": {
       "type": "anthropic",
@@ -492,7 +465,7 @@ To add specific models to the configuration, configure as such:
 
 ```json
 {
-  "$schema": "https://charm.land/crush.json",
+
   "providers": {
     "vertexai": {
       "models": [
@@ -537,7 +510,7 @@ config:
 
 ```json
 {
-  "$schema": "https://charm.land/crush.json",
+
   "options": {
     "debug": true,
     "debug_lsp": true
@@ -564,7 +537,7 @@ your `crush.json` config:
 
 ```json
 {
-  "$schema": "https://charm.land/crush.json",
+
   "options": {
     "disable_provider_auto_update": true
   }
@@ -638,7 +611,7 @@ Microsoft’s Terms of Service.
 
 We’re committed to building sustainable, trusted integrations with model
 providers. If you’re a provider interested in working with us,
-[reach out](mailto:vt100@charm.sh).
+[reach out](mailto:team@tulpa.dev).
 
 ## Contributing
 
@@ -648,23 +621,12 @@ See the [contributing guide](https://github.com/charmbracelet/crush?tab=contribu
 
 We’d love to hear your thoughts on this project. Need help? We gotchu. You can find us on:
 
-- [Twitter](https://twitter.com/charmcli)
-- [Discord][discord]
-- [Slack](https://charm.land/slack)
-- [The Fediverse](https://mastodon.social/@charmcli)
-- [Bluesky](https://bsky.app/profile/charm.land)
-
-[discord]: https://charm.land/discord
+- [GitHub](https://github.com/tulpa-code/tulpa)
 
 ## License
 
-[FSL-1.1-MIT](https://github.com/charmbracelet/crush/raw/main/LICENSE.md)
+[FSL-1.1-MIT](LICENSE.md)
 
 ---
 
-Part of [Charm](https://charm.land).
-
-<a href="https://charm.land/"><img alt="The Charm logo" width="400" src="https://stuff.charm.sh/charm-banner-next.jpg" /></a>
-
-<!--prettier-ignore-->
-Charm热爱开源 • Charm loves open source
+Based on [Crush](https://github.com/charmbracelet/crush) by Charm, with huge gratitude.

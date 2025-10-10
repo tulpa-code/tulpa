@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/v2/spinner"
 	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/catwalk/pkg/catwalk"
+	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/tulpa-code/tulpa/internal/config"
 	"github.com/tulpa-code/tulpa/internal/home"
 	"github.com/tulpa-code/tulpa/internal/llm/prompt"
@@ -23,7 +24,6 @@ import (
 	"github.com/tulpa-code/tulpa/internal/tui/styles"
 	"github.com/tulpa-code/tulpa/internal/tui/util"
 	"github.com/tulpa-code/tulpa/internal/version"
-	"github.com/charmbracelet/lipgloss/v2"
 )
 
 type Splash interface {
@@ -575,12 +575,12 @@ func (s *splashCmp) logoBlock() string {
 	}
 	return logoStyle.Render(
 		logo.Render(version.Version, false, logo.Opts{
-			FieldColor:   t.Primary,
-			TitleColorA:  t.Secondary,
-			TitleColorB:  t.Primary,
-			CharmColor:   t.Secondary,
-			VersionColor: t.Primary,
-			Width:        s.width - logoStyle.GetHorizontalFrameSize(),
+			FieldColor:    t.Primary,
+			TitleColorA:   t.Secondary,
+			TitleColorB:   t.Primary,
+			SubtitleColor: t.Secondary,
+			VersionColor:  t.Primary,
+			Width:         s.width - logoStyle.GetHorizontalFrameSize(),
 		}),
 	)
 }

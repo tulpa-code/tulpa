@@ -5,6 +5,9 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
+	"github.com/charmbracelet/x/powernap/pkg/lsp/protocol"
 	"github.com/tulpa-code/tulpa/internal/config"
 	"github.com/tulpa-code/tulpa/internal/csync"
 	"github.com/tulpa-code/tulpa/internal/fsext"
@@ -13,9 +16,6 @@ import (
 	"github.com/tulpa-code/tulpa/internal/session"
 	"github.com/tulpa-code/tulpa/internal/tui/styles"
 	"github.com/tulpa-code/tulpa/internal/tui/util"
-	"github.com/charmbracelet/lipgloss/v2"
-	"github.com/charmbracelet/x/ansi"
-	"github.com/charmbracelet/x/powernap/pkg/lsp/protocol"
 )
 
 type Header interface {
@@ -73,9 +73,9 @@ func (h *header) View() string {
 
 	var b strings.Builder
 
-	b.WriteString(t.S().Base.Foreground(t.Secondary).Render("Charm™"))
+	b.WriteString(t.S().Base.Foreground(t.Secondary).Render("Tulpa"))
 	b.WriteString(gap)
-	b.WriteString(styles.ApplyBoldForegroundGrad("CRUSH", t.Secondary, t.Primary))
+	b.WriteString(styles.ApplyBoldForegroundGrad("AI", t.Secondary, t.Primary))
 	b.WriteString(gap)
 
 	availDetailWidth := h.width - leftPadding - rightPadding - lipgloss.Width(b.String()) - minDiags

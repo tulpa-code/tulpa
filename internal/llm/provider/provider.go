@@ -140,7 +140,7 @@ func WithMaxTokens(maxTokens int64) ProviderClientOption {
 }
 
 func NewProvider(cfg config.ProviderConfig, opts ...ProviderClientOption) (Provider, error) {
-	restore := config.PushPopCrushEnv()
+	restore := config.PushPopTulpaEnv()
 	defer restore()
 	resolvedAPIKey, err := config.Get().Resolve(cfg.APIKey)
 	if err != nil {
