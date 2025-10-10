@@ -6,7 +6,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 
-	"github.com/charmbracelet/crush/internal/cmd"
+	"github.com/tulpa-code/tulpa/internal/cmd"
 	_ "github.com/joho/godotenv/autoload"
 )
 

@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/charmbracelet/crush/internal/llm/tools"
-	"github.com/charmbracelet/crush/internal/message"
-	"github.com/charmbracelet/crush/internal/session"
+	"github.com/tulpa-code/tulpa/internal/llm/tools"
+	"github.com/tulpa-code/tulpa/internal/message"
+	"github.com/tulpa-code/tulpa/internal/session"
 )
 
 type agentTool struct {

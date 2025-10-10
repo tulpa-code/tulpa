@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/crush/internal/fsext"
+	"github.com/tulpa-code/tulpa/internal/fsext"
 )
 
 // regexCache provides thread-safe caching of compiled regex patterns

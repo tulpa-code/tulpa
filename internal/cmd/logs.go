@@ -10,7 +10,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/charmbracelet/crush/internal/config"
+	"github.com/tulpa-code/tulpa/internal/config"
 	"github.com/charmbracelet/log/v2"
 	"github.com/nxadm/tail"
 	"github.com/spf13/cobra"

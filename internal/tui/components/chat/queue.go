@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/crush/internal/tui/styles"
+	"github.com/tulpa-code/tulpa/internal/tui/styles"
 	"github.com/charmbracelet/lipgloss/v2"
 )
 

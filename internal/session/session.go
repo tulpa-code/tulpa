@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/charmbracelet/crush/internal/db"
-	"github.com/charmbracelet/crush/internal/event"
-	"github.com/charmbracelet/crush/internal/pubsub"
+	"github.com/tulpa-code/tulpa/internal/db"
+	"github.com/tulpa-code/tulpa/internal/event"
+	"github.com/tulpa-code/tulpa/internal/pubsub"
 	"github.com/google/uuid"
 )
 

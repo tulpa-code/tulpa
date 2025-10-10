@@ -6,12 +6,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss/v2"
 
-	"github.com/charmbracelet/crush/internal/config"
-	"github.com/charmbracelet/crush/internal/tui/components/core"
-	"github.com/charmbracelet/crush/internal/tui/components/dialogs"
-	"github.com/charmbracelet/crush/internal/tui/exp/list"
-	"github.com/charmbracelet/crush/internal/tui/styles"
-	"github.com/charmbracelet/crush/internal/tui/util"
+	"github.com/tulpa-code/tulpa/internal/config"
+	"github.com/tulpa-code/tulpa/internal/tui/components/core"
+	"github.com/tulpa-code/tulpa/internal/tui/components/dialogs"
+	"github.com/tulpa-code/tulpa/internal/tui/exp/list"
+	"github.com/tulpa-code/tulpa/internal/tui/styles"
+	"github.com/tulpa-code/tulpa/internal/tui/util"
 )
 
 const (

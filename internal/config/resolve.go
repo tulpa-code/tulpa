@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/crush/internal/env"
-	"github.com/charmbracelet/crush/internal/shell"
+	"github.com/tulpa-code/tulpa/internal/env"
+	"github.com/tulpa-code/tulpa/internal/shell"
 )
 
 type VariableResolver interface {

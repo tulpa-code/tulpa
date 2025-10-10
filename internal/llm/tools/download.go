@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/crush/internal/permission"
+	"github.com/tulpa-code/tulpa/internal/permission"
 )
 
 type DownloadParams struct {
