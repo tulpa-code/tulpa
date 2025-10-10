@@ -14,7 +14,7 @@ require (
 	github.com/charlievieth/fastwalk v1.0.14
 	github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1.0.20250820203609-601216f68ee2
 	github.com/charmbracelet/bubbletea/v2 v2.0.0-beta.4.0.20250930175933-4cafc092c5e7
-	github.com/charmbracelet/catwalk v0.6.3
+	github.com/charmbracelet/catwalk v0.6.4
 	github.com/charmbracelet/fang v0.4.3
 	github.com/charmbracelet/glamour/v2 v2.0.0-20250811143442-a27abb32f018
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.3.0.20250917201909-41ff0bf215ea
@@ -149,10 +149,10 @@ require (
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/term v0.35.0 // indirect
-	golang.org/x/text v0.29.0
+	golang.org/x/text v0.30.0
 	golang.org/x/time v0.8.0 // indirect
 	google.golang.org/api v0.211.0 // indirect
-	google.golang.org/genai v1.28.0
+	google.golang.org/genai v1.29.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463 // indirect
 	google.golang.org/grpc v1.71.0 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
