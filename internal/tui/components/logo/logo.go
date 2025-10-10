@@ -1,4 +1,4 @@
-// Package logo renders a Crush wordmark in a stylized way.
+// Package logo renders a Tulpa wordmark in a stylized way.
 package logo
 
 import (
@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/tulpa-code/tulpa/internal/tui/styles"
 	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/exp/slice"
+	"github.com/tulpa-code/tulpa/internal/tui/styles"
 )
 
 // letterform represents a letterform. It can be stretched horizontally by
@@ -20,7 +20,7 @@ type letterform func(bool) string
 
 const diag = `╱`
 
-// Opts are the options for rendering the Crush title art.
+// Opts are the options for rendering the Tulpa title art.
 type Opts struct {
 	FieldColor   color.Color // diagonal lines
 	TitleColorA  color.Color // left gradient ramp point
@@ -30,7 +30,7 @@ type Opts struct {
 	Width        int         // width of the rendered logo, used for truncation
 }
 
-// Render renders the Crush logo. Set the argument to true to render the narrow
+// Render renders the Tulpa logo. Set the argument to true to render the narrow
 // version, intended for use in a sidebar.
 //
 // The compact argument determines whether it renders compact for the sidebar
@@ -45,42 +45,42 @@ func Render(version string, compact bool, o Opts) string {
 	// Title.
 	const spacing = 1
 	letterforms := []letterform{
-		letterC,
-		letterR,
+		letterT,
 		letterU,
-		letterSStylized,
-		letterH,
+		letterL,
+		letterP,
+		letterA,
 	}
 	stretchIndex := -1 // -1 means no stretching.
 	if !compact {
 		stretchIndex = rand.IntN(len(letterforms))
 	}
 
-	crush := renderWord(spacing, stretchIndex, letterforms...)
-	crushWidth := lipgloss.Width(crush)
+	tulpa := renderWord(spacing, stretchIndex, letterforms...)
+	tulpaWidth := lipgloss.Width(tulpa)
 	b := new(strings.Builder)
-	for r := range strings.SplitSeq(crush, "\n") {
+	for r := range strings.SplitSeq(tulpa, "\n") {
 		fmt.Fprintln(b, styles.ApplyForegroundGrad(r, o.TitleColorA, o.TitleColorB))
 	}
-	crush = b.String()
+	tulpa = b.String()
 
 	// Charm and version.
 	metaRowGap := 1
-	maxVersionWidth := crushWidth - lipgloss.Width(charm) - metaRowGap
+	maxVersionWidth := tulpaWidth - lipgloss.Width(charm) - metaRowGap
 	version = ansi.Truncate(version, maxVersionWidth, "…") // truncate version if too long.
-	gap := max(0, crushWidth-lipgloss.Width(charm)-lipgloss.Width(version))
+	gap := max(0, tulpaWidth-lipgloss.Width(charm)-lipgloss.Width(version))
 	metaRow := fg(o.CharmColor, charm) + strings.Repeat(" ", gap) + fg(o.VersionColor, version)
 
-	// Join the meta row and big Crush title.
-	crush = strings.TrimSpace(metaRow + "\n" + crush)
+	// Join the meta row and big Tulpa title.
+	tulpa = strings.TrimSpace(metaRow + "\n" + tulpa)
 
 	// Narrow version.
 	if compact {
-		field := fg(o.FieldColor, strings.Repeat(diag, crushWidth))
-		return strings.Join([]string{field, field, crush, field, ""}, "\n")
+		field := fg(o.FieldColor, strings.Repeat(diag, tulpaWidth))
+		return strings.Join([]string{field, field, tulpa, field, ""}, "\n")
 	}
 
-	fieldHeight := lipgloss.Height(crush)
+	fieldHeight := lipgloss.Height(tulpa)
 
 	// Left field.
 	const leftWidth = 6
@@ -91,7 +91,7 @@ func Render(version string, compact bool, o Opts) string {
 	}
 
 	// Right field.
-	rightWidth := max(15, o.Width-crushWidth-leftWidth-2) // 2 for the gap.
+	rightWidth := max(15, o.Width-tulpaWidth-leftWidth-2) // 2 for the gap.
 	const stepDownAt = 0
 	rightField := new(strings.Builder)
 	for i := range fieldHeight {
@@ -104,7 +104,7 @@ func Render(version string, compact bool, o Opts) string {
 
 	// Return the wide version.
 	const hGap = " "
-	logo := lipgloss.JoinHorizontal(lipgloss.Top, leftField.String(), hGap, crush, hGap, rightField.String())
+	logo := lipgloss.JoinHorizontal(lipgloss.Top, leftField.String(), hGap, tulpa, hGap, rightField.String())
 	if o.Width > 0 {
 		// Truncate the logo to the specified width.
 		lines := strings.Split(logo, "\n")
@@ -116,13 +116,13 @@ func Render(version string, compact bool, o Opts) string {
 	return logo
 }
 
-// SmallRender renders a smaller version of the Crush logo, suitable for
+// SmallRender renders a smaller version of the Tulpa logo, suitable for
 // smaller windows or sidebar usage.
 func SmallRender(width int) string {
 	t := styles.CurrentTheme()
 	title := t.S().Base.Foreground(t.Secondary).Render("Charm™")
-	title = fmt.Sprintf("%s %s", title, styles.ApplyBoldForegroundGrad("Crush", t.Secondary, t.Primary))
-	remainingWidth := width - lipgloss.Width(title) - 1 // 1 for the space after "Crush"
+	title = fmt.Sprintf("%s %s", title, styles.ApplyBoldForegroundGrad("Tulpa", t.Secondary, t.Primary))
+	remainingWidth := width - lipgloss.Width(title) - 1 // 1 for the space after "Tulpa"
 	if remainingWidth > 0 {
 		lines := strings.Repeat("╱", remainingWidth)
 		title = fmt.Sprintf("%s %s", title, t.S().Base.Foreground(t.Primary).Render(lines))
@@ -285,6 +285,34 @@ func letterSStylized(stretch bool) string {
 	)
 }
 
+// letterT renders the letter T in a stylized way. It takes an integer that
+// determines how many cells to stretch the letter. If the stretch is less than
+// 1, it defaults to no stretching.
+func letterT(stretch bool) string {
+	// Here's what we're making:
+	//
+	// ▀▀▀▀▀
+	//   █
+	//   ▀
+
+	top := heredoc.Doc(`
+		▀▀▀▀▀
+	`)
+	stem := heredoc.Doc(`
+		  █
+		  ▀
+	`)
+	return joinLetterform(
+		stretchLetterformPart(top, letterformProps{
+			stretch:    stretch,
+			width:      5,
+			minStretch: 8,
+			maxStretch: 12,
+		}),
+		stem,
+	)
+}
+
 // letterU renders the letter U in a stylized way. It takes an integer that
 // determines how many cells to stretch the letter. If the stretch is less than
 // 1, it defaults to no stretching.
@@ -302,6 +330,7 @@ func letterU(stretch bool) string {
 	middle := heredoc.Doc(`
 
 
+
 		▀
 	`)
 	return joinLetterform(
@@ -313,6 +342,101 @@ func letterU(stretch bool) string {
 			maxStretch: 12,
 		}),
 		side,
+	)
+}
+
+// letterL renders the letter L in a stylized way. It takes an integer that
+// determines how many cells to stretch the letter. If the stretch is less than
+// 1, it defaults to no stretching.
+func letterL(stretch bool) string {
+	// Here's what we're making:
+	//
+	// █
+	// █
+	// ▀▀▀▀
+
+	side := heredoc.Doc(`
+		█
+		█
+	`)
+	bottom := heredoc.Doc(`
+		▀▀▀▀
+	`)
+	return joinLetterform(
+		side,
+		stretchLetterformPart(bottom, letterformProps{
+			stretch:    stretch,
+			width:      4,
+			minStretch: 7,
+			maxStretch: 12,
+		}),
+	)
+}
+
+// letterP renders the letter P in a stylized way. It takes an integer that
+// determines how many cells to stretch the letter. If the stretch is less than
+// 1, it defaults to no stretching.
+func letterP(stretch bool) string {
+	// Here's what we're making:
+	//
+	// █▀▀▀▄
+	// █▀▀▀▄
+	// █
+
+	left := heredoc.Doc(`
+		█
+		█
+		█
+	`)
+	right := heredoc.Doc(`
+		▀▀▀▄
+		▀▀▀▄
+		
+	`)
+	return joinLetterform(
+		left,
+		stretchLetterformPart(right, letterformProps{
+			stretch:    stretch,
+			width:      4,
+			minStretch: 7,
+			maxStretch: 12,
+		}),
+	)
+}
+
+// letterA renders the letter A in a stylized way. It takes an integer that
+// determines how many cells to stretch the letter. If the stretch is less than
+// 1, it defaults to no stretching.
+func letterA(stretch bool) string {
+	// Here's what we're making:
+	//
+	// ▄▀▀▀▄
+	// █▀▀▀█
+	// ▀   ▀
+
+	left := heredoc.Doc(`
+		▄
+		█
+		▀
+	`)
+	middle := heredoc.Doc(`
+		▀▀▀
+		▀▀▀
+	`)
+	right := heredoc.Doc(`
+		▄
+		█
+		▀
+	`)
+	return joinLetterform(
+		left,
+		stretchLetterformPart(middle, letterformProps{
+			stretch:    stretch,
+			width:      3,
+			minStretch: 7,
+			maxStretch: 12,
+		}),
+		right,
 	)
 }
 

@@ -16,12 +16,12 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/catwalk/pkg/catwalk"
+	powernapConfig "github.com/charmbracelet/x/powernap/pkg/config"
 	"github.com/tulpa-code/tulpa/internal/csync"
 	"github.com/tulpa-code/tulpa/internal/env"
 	"github.com/tulpa-code/tulpa/internal/fsext"
 	"github.com/tulpa-code/tulpa/internal/home"
 	"github.com/tulpa-code/tulpa/internal/log"
-	powernapConfig "github.com/charmbracelet/x/powernap/pkg/config"
 )
 
 const defaultCatwalkURL = "https://catwalk.charm.sh"
@@ -101,10 +101,10 @@ func Load(workingDir, dataDir string, debug bool) (*Config, error) {
 	return cfg, nil
 }
 
-func PushPopCrushEnv() func() {
+func PushPopTulpaEnv() func() {
 	found := []string{}
 	for _, ev := range os.Environ() {
-		if strings.HasPrefix(ev, "CRUSH_") {
+		if strings.HasPrefix(ev, "TULPA_") {
 			pair := strings.SplitN(ev, "=", 2)
 			if len(pair) != 2 {
 				continue
@@ -131,7 +131,7 @@ func PushPopCrushEnv() func() {
 
 func (c *Config) configureProviders(env env.Env, resolver VariableResolver, knownProviders []catwalk.Provider) error {
 	knownProviderNames := make(map[string]bool)
-	restore := PushPopCrushEnv()
+	restore := PushPopTulpaEnv()
 	defer restore()
 	for _, p := range knownProviders {
 		knownProviderNames[string(p.ID)] = true

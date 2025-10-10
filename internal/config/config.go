@@ -12,14 +12,14 @@ import (
 	"time"
 
 	"github.com/charmbracelet/catwalk/pkg/catwalk"
+	"github.com/tidwall/sjson"
 	"github.com/tulpa-code/tulpa/internal/csync"
 	"github.com/tulpa-code/tulpa/internal/env"
-	"github.com/tidwall/sjson"
 )
 
 const (
-	appName              = "crush"
-	defaultDataDirectory = ".crush"
+	appName              = "tulpa"
+	defaultDataDirectory = ".tulpa"
 )
 
 var defaultContextPaths = []string{
@@ -30,12 +30,12 @@ var defaultContextPaths = []string{
 	"CLAUDE.local.md",
 	"GEMINI.md",
 	"gemini.md",
-	"crush.md",
-	"crush.local.md",
-	"Crush.md",
-	"Crush.local.md",
-	"CRUSH.md",
-	"CRUSH.local.md",
+	"tulpa.md",
+	"tulpa.local.md",
+	"Tulpa.md",
+	"Tulpa.local.md",
+	"TULPA.md",
+	"TULPA.local.md",
 	"AGENTS.md",
 	"agents.md",
 	"Agents.md",
@@ -153,7 +153,7 @@ type Permissions struct {
 
 type Attribution struct {
 	CoAuthoredBy  bool `json:"co_authored_by,omitempty" jsonschema:"description=Add Co-Authored-By trailer to commit messages,default=true"`
-	GeneratedWith bool `json:"generated_with,omitempty" jsonschema:"description=Add Generated with Crush line to commit messages and issues and PRs,default=true"`
+	GeneratedWith bool `json:"generated_with,omitempty" jsonschema:"description=Add Generated with Tulpa line to commit messages and issues and PRs,default=true"`
 }
 
 type Options struct {
