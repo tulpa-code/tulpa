@@ -1,4 +1,4 @@
-module github.com/charmbracelet/crush
+module github.com/tulpa-code/tulpa
 
 go 1.25.0
 
