@@ -21,6 +21,7 @@ go.work.sum
 # IDE specific files
 .idea/
 .vscode/
+.tmp/
 *.swp
 *.swo
 
