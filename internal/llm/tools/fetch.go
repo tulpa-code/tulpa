@@ -138,7 +138,7 @@ func (t *fetchTool) Run(ctx context.Context, call ToolCall) (ToolResponse, error
 		return ToolResponse{}, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("User-Agent", "crush/1.0")
+	req.Header.Set("User-Agent", "tulpa/1.0")
 
 	resp, err := t.client.Do(req)
 	if err != nil {

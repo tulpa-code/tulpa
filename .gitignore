@@ -43,9 +43,9 @@ Thumbs.db
 .env
 .env.local
 
-**/.crush/**
+**/.tulpa/**
 
-/crush
+/tulpa
 
 manpages/
 completions/
