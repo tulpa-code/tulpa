@@ -4,21 +4,13 @@ package logo
 import (
 	"fmt"
 	"image/color"
-	"math/rand/v2"
 	"strings"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/charmbracelet/x/exp/slice"
 	"github.com/tulpa-code/tulpa/internal/tui/styles"
+	"github.com/tulpa-code/tulpa/internal/version"
 )
-
-// letterform represents a letterform. It can be stretched horizontally by
-// a given amount via the boolean argument.
-type letterform func(bool) string
-
-const diag = `╱`
 
 // Opts are the options for rendering the Tulpa title art.
 type Opts struct {
@@ -32,39 +24,37 @@ type Opts struct {
 
 // Render renders the Tulpa logo. Set the argument to true to render the narrow
 // version, intended for use in a sidebar.
-//
-// The compact argument determines whether it renders compact for the sidebar
-// or wider for the main pane.
 func Render(version string, compact bool, o Opts) string {
-	const tulpaTag = " AI"
+	const tulpaTag = " Stay Focused"
 
 	fg := func(c color.Color, s string) string {
 		return lipgloss.NewStyle().Foreground(c).Render(s)
 	}
 
-	// Title.
-	const spacing = 1
-	letterforms := []letterform{
-		letterT,
-		letterU,
-		letterL,
-		letterP,
-		letterA,
-	}
-	stretchIndex := -1 // -1 means no stretching.
-	if !compact {
-		stretchIndex = rand.IntN(len(letterforms))
+	// Simple ASCII art for TULPA
+	asciiArt := `
+░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓███████▓▒░ ░▒▓██████▓▒░
+   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░
+   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░
+   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓███████▓▒░░▒▓████████▓▒░
+   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
+   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
+   ░▒▓█▓▒░    ░▒▓██████▓▒░░▒▓████████▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
+`
+
+	// Remove leading/trailing whitespace and split into lines
+	lines := strings.Split(strings.TrimSpace(asciiArt), "\n")
+
+	// Apply gradient to each line
+	var gradientLines []string
+	for _, line := range lines {
+		gradientLines = append(gradientLines, styles.ApplyForegroundGrad(line, o.TitleColorA, o.TitleColorB))
 	}
 
-	tulpa := renderWord(spacing, stretchIndex, letterforms...)
-	tulpaWidth := lipgloss.Width(tulpa)
-	b := new(strings.Builder)
-	for r := range strings.SplitSeq(tulpa, "\n") {
-		fmt.Fprintln(b, styles.ApplyForegroundGrad(r, o.TitleColorA, o.TitleColorB))
-	}
-	tulpa = b.String()
+	tulpa := strings.Join(gradientLines, "\n")
+	tulpaWidth := lipgloss.Width(lines[0]) // width of first line
 
-	// Charm and version.
+	// Tulpa and version.
 	metaRowGap := 1
 	maxVersionWidth := tulpaWidth - lipgloss.Width(tulpaTag) - metaRowGap
 	version = ansi.Truncate(version, maxVersionWidth, "…") // truncate version if too long.
@@ -76,7 +66,7 @@ func Render(version string, compact bool, o Opts) string {
 
 	// Narrow version.
 	if compact {
-		field := fg(o.FieldColor, strings.Repeat(diag, tulpaWidth))
+		field := fg(o.FieldColor, strings.Repeat("#", tulpaWidth))
 		return strings.Join([]string{field, field, tulpa, field, ""}, "\n")
 	}
 
@@ -84,7 +74,7 @@ func Render(version string, compact bool, o Opts) string {
 
 	// Left field.
 	const leftWidth = 6
-	leftFieldRow := fg(o.FieldColor, strings.Repeat(diag, leftWidth))
+	leftFieldRow := fg(o.FieldColor, strings.Repeat("#", leftWidth))
 	leftField := new(strings.Builder)
 	for range fieldHeight {
 		fmt.Fprintln(leftField, leftFieldRow)
@@ -99,7 +89,7 @@ func Render(version string, compact bool, o Opts) string {
 		if i >= stepDownAt {
 			width = rightWidth - (i - stepDownAt)
 		}
-		fmt.Fprint(rightField, fg(o.FieldColor, strings.Repeat(diag, width)), "\n")
+		fmt.Fprint(rightField, fg(o.FieldColor, strings.Repeat("#", width)), "\n")
 	}
 
 	// Return the wide version.
@@ -120,352 +110,25 @@ func Render(version string, compact bool, o Opts) string {
 // smaller windows or sidebar usage.
 func SmallRender(width int) string {
 	t := styles.CurrentTheme()
-	title := t.S().Base.Foreground(t.Secondary).Render("Tulpa")
-	title = fmt.Sprintf("%s %s", title, styles.ApplyBoldForegroundGrad("AI", t.Secondary, t.Primary))
-	remainingWidth := width - lipgloss.Width(title) - 1 // 1 for the space after "Tulpa"
-	if remainingWidth > 0 {
-		lines := strings.Repeat("╱", remainingWidth)
-		title = fmt.Sprintf("%s %s", title, t.S().Base.Foreground(t.Primary).Render(lines))
-	}
-	return title
-}
 
-// renderWord renders letterforms to fork a word. stretchIndex is the index of
-// the letter to stretch, or -1 if no letter should be stretched.
-func renderWord(spacing int, stretchIndex int, letterforms ...letterform) string {
-	if spacing < 0 {
-		spacing = 0
-	}
+	// Compact ASCII art for TULPA
+	asciiArt := `
+░▀█▀░█░█░█░░░█▀█░█▀█
+░░█░░█░█░█░░░█▀▀░█▀█
+░░▀░░▀▀▀░▀▀▀░▀░░░▀░▀
+`
 
-	renderedLetterforms := make([]string, len(letterforms))
+	// Remove leading/trailing whitespace and split into lines
+	lines := strings.Split(strings.TrimSpace(asciiArt), "\n")
 
-	// pick one letter randomly to stretch
-	for i, letter := range letterforms {
-		renderedLetterforms[i] = letter(i == stretchIndex)
+	// Apply gradient to each line
+	var gradientLines []string
+	for _, line := range lines {
+		gradientLines = append(gradientLines, styles.ApplyForegroundGrad(line, t.Secondary, t.Primary))
 	}
 
-	if spacing > 0 {
-		// Add spaces between the letters and render.
-		renderedLetterforms = slice.Intersperse(renderedLetterforms, strings.Repeat(" ", spacing))
-	}
-	return strings.TrimSpace(
-		lipgloss.JoinHorizontal(lipgloss.Top, renderedLetterforms...),
-	)
-}
+	// Add version on top
+	versionText := t.S().Base.Foreground(t.Secondary).Render("v" + version.Version)
 
-// letterC renders the letter C in a stylized way. It takes an integer that
-// determines how many cells to stretch the letter. If the stretch is less than
-// 1, it defaults to no stretching.
-func letterC(stretch bool) string {
-	// Here's what we're making:
-	//
-	// ▄▀▀▀▀
-	// █
-	//	▀▀▀▀
-
-	left := heredoc.Doc(`
-		▄
-		█
-	`)
-	right := heredoc.Doc(`
-		▀
-
-		▀
-	`)
-	return joinLetterform(
-		left,
-		stretchLetterformPart(right, letterformProps{
-			stretch:    stretch,
-			width:      4,
-			minStretch: 7,
-			maxStretch: 12,
-		}),
-	)
-}
-
-// letterH renders the letter H in a stylized way. It takes an integer that
-// determines how many cells to stretch the letter. If the stretch is less than
-// 1, it defaults to no stretching.
-func letterH(stretch bool) string {
-	// Here's what we're making:
-	//
-	// █   █
-	// █▀▀▀█
-	// ▀   ▀
-
-	side := heredoc.Doc(`
-		█
-		█
-		▀`)
-	middle := heredoc.Doc(`
-
-		▀
-	`)
-	return joinLetterform(
-		side,
-		stretchLetterformPart(middle, letterformProps{
-			stretch:    stretch,
-			width:      3,
-			minStretch: 8,
-			maxStretch: 12,
-		}),
-		side,
-	)
-}
-
-// letterR renders the letter R in a stylized way. It takes an integer that
-// determines how many cells to stretch the letter. If the stretch is less than
-// 1, it defaults to no stretching.
-func letterR(stretch bool) string {
-	// Here's what we're making:
-	//
-	// █▀▀▀▄
-	// █▀▀▀▄
-	// ▀   ▀
-
-	left := heredoc.Doc(`
-		█
-		█
-		▀
-	`)
-	center := heredoc.Doc(`
-		▀
-		▀
-	`)
-	right := heredoc.Doc(`
-		▄
-		▄
-		▀
-	`)
-	return joinLetterform(
-		left,
-		stretchLetterformPart(center, letterformProps{
-			stretch:    stretch,
-			width:      3,
-			minStretch: 7,
-			maxStretch: 12,
-		}),
-		right,
-	)
-}
-
-// letterSStylized renders the letter S in a stylized way, more so than
-// [letterS]. It takes an integer that determines how many cells to stretch the
-// letter. If the stretch is less than 1, it defaults to no stretching.
-func letterSStylized(stretch bool) string {
-	// Here's what we're making:
-	//
-	// ▄▀▀▀▀▀
-	// ▀▀▀▀▀█
-	// ▀▀▀▀▀
-
-	left := heredoc.Doc(`
-		▄
-		▀
-		▀
-	`)
-	center := heredoc.Doc(`
-		▀
-		▀
-		▀
-	`)
-	right := heredoc.Doc(`
-		▀
-		█
-	`)
-	return joinLetterform(
-		left,
-		stretchLetterformPart(center, letterformProps{
-			stretch:    stretch,
-			width:      3,
-			minStretch: 7,
-			maxStretch: 12,
-		}),
-		right,
-	)
-}
-
-// letterT renders the letter T in a stylized way. It takes an integer that
-// determines how many cells to stretch the letter. If the stretch is less than
-// 1, it defaults to no stretching.
-func letterT(stretch bool) string {
-	// Here's what we're making:
-	//
-	// ▀▀▀▀▀
-	//   █
-	//   ▀
-
-	top := heredoc.Doc(`
-		▀▀▀▀▀
-	`)
-	stem := heredoc.Doc(`
-		  █
-		  ▀
-	`)
-	return joinLetterform(
-		stretchLetterformPart(top, letterformProps{
-			stretch:    stretch,
-			width:      5,
-			minStretch: 8,
-			maxStretch: 12,
-		}),
-		stem,
-	)
-}
-
-// letterU renders the letter U in a stylized way. It takes an integer that
-// determines how many cells to stretch the letter. If the stretch is less than
-// 1, it defaults to no stretching.
-func letterU(stretch bool) string {
-	// Here's what we're making:
-	//
-	// █   █
-	// █   █
-	//	▀▀▀
-
-	side := heredoc.Doc(`
-		█
-		█
-	`)
-	middle := heredoc.Doc(`
-
-
-
-		▀
-	`)
-	return joinLetterform(
-		side,
-		stretchLetterformPart(middle, letterformProps{
-			stretch:    stretch,
-			width:      3,
-			minStretch: 7,
-			maxStretch: 12,
-		}),
-		side,
-	)
-}
-
-// letterL renders the letter L in a stylized way. It takes an integer that
-// determines how many cells to stretch the letter. If the stretch is less than
-// 1, it defaults to no stretching.
-func letterL(stretch bool) string {
-	// Here's what we're making:
-	//
-	// █
-	// █
-	// ▀▀▀▀
-
-	side := heredoc.Doc(`
-		█
-		█
-	`)
-	bottom := heredoc.Doc(`
-		▀▀▀▀
-	`)
-	return joinLetterform(
-		side,
-		stretchLetterformPart(bottom, letterformProps{
-			stretch:    stretch,
-			width:      4,
-			minStretch: 7,
-			maxStretch: 12,
-		}),
-	)
-}
-
-// letterP renders the letter P in a stylized way. It takes an integer that
-// determines how many cells to stretch the letter. If the stretch is less than
-// 1, it defaults to no stretching.
-func letterP(stretch bool) string {
-	// Here's what we're making:
-	//
-	// █▀▀▀▄
-	// █▀▀▀▄
-	// █
-
-	left := heredoc.Doc(`
-		█
-		█
-		█
-	`)
-	right := heredoc.Doc(`
-		▀▀▀▄
-		▀▀▀▄
-		
-	`)
-	return joinLetterform(
-		left,
-		stretchLetterformPart(right, letterformProps{
-			stretch:    stretch,
-			width:      4,
-			minStretch: 7,
-			maxStretch: 12,
-		}),
-	)
-}
-
-// letterA renders the letter A in a stylized way. It takes an integer that
-// determines how many cells to stretch the letter. If the stretch is less than
-// 1, it defaults to no stretching.
-func letterA(stretch bool) string {
-	// Here's what we're making:
-	//
-	// ▄▀▀▀▄
-	// █▀▀▀█
-	// ▀   ▀
-
-	left := heredoc.Doc(`
-		▄
-		█
-		▀
-	`)
-	middle := heredoc.Doc(`
-		▀▀▀
-		▀▀▀
-	`)
-	right := heredoc.Doc(`
-		▄
-		█
-		▀
-	`)
-	return joinLetterform(
-		left,
-		stretchLetterformPart(middle, letterformProps{
-			stretch:    stretch,
-			width:      3,
-			minStretch: 7,
-			maxStretch: 12,
-		}),
-		right,
-	)
-}
-
-func joinLetterform(letters ...string) string {
-	return lipgloss.JoinHorizontal(lipgloss.Top, letters...)
-}
-
-// letterformProps defines letterform stretching properties.
-// for readability.
-type letterformProps struct {
-	width      int
-	minStretch int
-	maxStretch int
-	stretch    bool
-}
-
-// stretchLetterformPart is a helper function for letter stretching. If randomize
-// is false the minimum number will be used.
-func stretchLetterformPart(s string, p letterformProps) string {
-	if p.maxStretch < p.minStretch {
-		p.minStretch, p.maxStretch = p.maxStretch, p.minStretch
-	}
-	n := p.width
-	if p.stretch {
-		n = rand.IntN(p.maxStretch-p.minStretch) + p.minStretch //nolint:gosec
-	}
-	parts := make([]string, n)
-	for i := range parts {
-		parts[i] = s
-	}
-	return lipgloss.JoinHorizontal(lipgloss.Top, parts...)
+	return versionText + "\n" + strings.Join(gradientLines, "\n")
 }

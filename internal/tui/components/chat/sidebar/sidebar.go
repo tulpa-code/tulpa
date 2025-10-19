@@ -27,7 +27,6 @@ import (
 	"github.com/tulpa-code/tulpa/internal/tui/components/mcp"
 	"github.com/tulpa-code/tulpa/internal/tui/styles"
 	"github.com/tulpa-code/tulpa/internal/tui/util"
-	"github.com/tulpa-code/tulpa/internal/version"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -124,14 +123,9 @@ func (m *sidebarCmp) View() string {
 	}
 
 	if !m.compactMode {
-		if m.height > LogoHeightBreakpoint {
-			parts = append(parts, m.logo)
-		} else {
-			// Use a smaller logo for smaller screens
-			parts = append(parts,
-				logo.SmallRender(m.width-style.GetHorizontalFrameSize()),
-				"")
-		}
+		parts = append(parts,
+			logo.SmallRender(m.width-style.GetHorizontalFrameSize()),
+			"")
 	}
 
 	if !m.compactMode && m.session.ID != "" {
@@ -277,16 +271,9 @@ func (m *sidebarCmp) GetSize() (int, int) {
 	return m.width, m.height
 }
 
+// logoBlock is no longer used - sidebar always uses SmallRender now
 func (m *sidebarCmp) logoBlock() string {
-	t := styles.CurrentTheme()
-	return logo.Render(version.Version, true, logo.Opts{
-		FieldColor:    t.Primary,
-		TitleColorA:   t.Secondary,
-		TitleColorB:   t.Primary,
-		SubtitleColor: t.Secondary,
-		VersionColor:  t.Primary,
-		Width:         m.width - 2,
-	})
+	return ""
 }
 
 func (m *sidebarCmp) getMaxWidth() int {
