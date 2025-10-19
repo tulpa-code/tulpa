@@ -17,7 +17,7 @@ var Dir = sync.OnceValue(func() string {
 		slog.Debug("user home directory", "home", home)
 		return home
 	}
-	tmp, err := os.MkdirTemp("crush", "")
+	tmp, err := os.MkdirTemp("tulpa", "")
 	if err != nil {
 		slog.Error("could not find the user home directory")
 		return ""

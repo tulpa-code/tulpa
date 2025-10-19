@@ -157,12 +157,12 @@ type Attribution struct {
 }
 
 type Options struct {
-	ContextPaths              []string     `json:"context_paths,omitempty" jsonschema:"description=Paths to files containing context information for the AI,example=.cursorrules,example=CRUSH.md"`
+	ContextPaths              []string     `json:"context_paths,omitempty" jsonschema:"description=Paths to files containing context information for the AI,example=.cursorrules,example=TULPA.md"`
 	TUI                       *TUIOptions  `json:"tui,omitempty" jsonschema:"description=Terminal user interface options"`
 	Debug                     bool         `json:"debug,omitempty" jsonschema:"description=Enable debug logging,default=false"`
 	DebugLSP                  bool         `json:"debug_lsp,omitempty" jsonschema:"description=Enable debug logging for LSP servers,default=false"`
 	DisableAutoSummarize      bool         `json:"disable_auto_summarize,omitempty" jsonschema:"description=Disable automatic conversation summarization,default=false"`
-	DataDirectory             string       `json:"data_directory,omitempty" jsonschema:"description=Directory for storing application data (relative to working directory),default=.crush,example=.crush"` // Relative to the cwd
+	DataDirectory             string       `json:"data_directory,omitempty" jsonschema:"description=Directory for storing application data (relative to working directory),default=.tulpa,example=.tulpa"` // Relative to the cwd
 	DisabledTools             []string     `json:"disabled_tools" jsonschema:"description=Tools to disable"`
 	DisableProviderAutoUpdate bool         `json:"disable_provider_auto_update,omitempty" jsonschema:"description=Disable providers auto-update,default=false"`
 	Attribution               *Attribution `json:"attribution,omitempty" jsonschema:"description=Attribution settings for generated content"`
@@ -272,7 +272,7 @@ func (t ToolLs) Limits() (depth, items int) {
 	return ptrValOr(t.MaxDepth, -1), ptrValOr(t.MaxItems, -1)
 }
 
-// Config holds the configuration for crush.
+// Config holds the configuration for tulpa.
 type Config struct {
 	Schema string `json:"$schema,omitempty"`
 

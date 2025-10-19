@@ -109,7 +109,7 @@ func PushPopTulpaEnv() func() {
 			if len(pair) != 2 {
 				continue
 			}
-			found = append(found, strings.TrimPrefix(pair[0], "CRUSH_"))
+			found = append(found, strings.TrimPrefix(pair[0], "TULPA_"))
 		}
 	}
 	backups := make(map[string]string)
@@ -118,7 +118,7 @@ func PushPopTulpaEnv() func() {
 	}
 
 	for _, ev := range found {
-		os.Setenv(ev, os.Getenv("CRUSH_"+ev))
+		os.Setenv(ev, os.Getenv("TULPA_"+ev))
 	}
 
 	restore := func() {
@@ -345,7 +345,7 @@ func (c *Config) setDefaults(workingDir, dataDir string) {
 	slices.Sort(c.Options.ContextPaths)
 	c.Options.ContextPaths = slices.Compact(c.Options.ContextPaths)
 
-	if str, ok := os.LookupEnv("CRUSH_DISABLE_PROVIDER_AUTO_UPDATE"); ok {
+	if str, ok := os.LookupEnv("TULPA_DISABLE_PROVIDER_AUTO_UPDATE"); ok {
 		c.Options.DisableProviderAutoUpdate, _ = strconv.ParseBool(str)
 	}
 }
@@ -616,8 +616,8 @@ func GlobalConfig() string {
 	}
 
 	// return the path to the main config directory
-	// for windows, it should be in `%LOCALAPPDATA%/crush/`
-	// for linux and macOS, it should be in `$HOME/.config/crush/`
+	// for windows, it should be in `%LOCALAPPDATA%/tulpa/`
+	// for linux and macOS, it should be in `$HOME/.config/tulpa/`
 	if runtime.GOOS == "windows" {
 		localAppData := os.Getenv("LOCALAPPDATA")
 		if localAppData == "" {
@@ -638,8 +638,8 @@ func GlobalConfigData() string {
 	}
 
 	// return the path to the main data directory
-	// for windows, it should be in `%LOCALAPPDATA%/crush/`
-	// for linux and macOS, it should be in `$HOME/.local/share/crush/`
+	// for windows, it should be in `%LOCALAPPDATA%/tulpa/`
+	// for linux and macOS, it should be in `$HOME/.local/share/tulpa/`
 	if runtime.GOOS == "windows" {
 		localAppData := os.Getenv("LOCALAPPDATA")
 		if localAppData == "" {

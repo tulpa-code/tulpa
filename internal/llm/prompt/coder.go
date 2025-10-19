@@ -25,7 +25,7 @@ func CoderPrompt(p string, contextFiles ...string) string {
 	case string(catwalk.InferenceProviderGemini):
 		basePrompt = string(geminiCoderPrompt)
 	}
-	if ok, _ := strconv.ParseBool(os.Getenv("CRUSH_CODER_V2")); ok {
+	if ok, _ := strconv.ParseBool(os.Getenv("TULPA_CODER_V2")); ok {
 		basePrompt = string(coderV2Prompt)
 	}
 	envInfo := getEnvironmentInfo()

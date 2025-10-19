@@ -33,7 +33,7 @@ tasks:
     cmds:
       - go build .
     generates:
-      - crush
+      - tulpa
 
   run:
     desc: Run build
@@ -53,7 +53,7 @@ tasks:
   dev:
     desc: Run with profiling enabled
     env:
-      CRUSH_PROFILE: true
+      TULPA_PROFILE: true
     cmds:
       - go run .
 

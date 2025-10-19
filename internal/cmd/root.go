@@ -69,7 +69,7 @@ tulpa -v
 tulpa run "Explain the use of context in Go"
 
 # Run in dangerous mode (auto-accept all permissions)
-crush -y
+tulpa -y
   `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		app, err := setupApp(cmd)
@@ -193,7 +193,7 @@ func setupApp(cmd *cobra.Command) (*app.App, error) {
 }
 
 func shouldEnableMetrics() bool {
-	if v, _ := strconv.ParseBool(os.Getenv("CRUSH_DISABLE_METRICS")); v {
+	if v, _ := strconv.ParseBool(os.Getenv("TULPA_DISABLE_METRICS")); v {
 		return false
 	}
 	if v, _ := strconv.ParseBool(os.Getenv("DO_NOT_TRACK")); v {

@@ -399,7 +399,7 @@ func (c *commandDialogCmp) defaultCommands() []Command {
 		{
 			ID:          "init",
 			Title:       "Initialize Project",
-			Description: "Create/Update the CRUSH.md memory file",
+			Description: "Create/Update the TULPA.md memory file",
 			Handler: func(cmd Command) tea.Cmd {
 				return util.CmdHandler(chat.SendMsg{
 					Text: prompt.Initialize(),

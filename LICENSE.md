@@ -8,6 +8,13 @@ FSL-1.1-MIT
 
 Copyright 2025 Charmbracelet, Inc
 
+---
+
+This is a fork of Charmbracelet's original project, modified for the "tulpa" project.
+For the original version, see: https://github.com/charmbracelet/crush
+
+Modifications to this fork are also available under the same license terms.
+
 ## Terms and Conditions
 
 ### Licensor ("We")

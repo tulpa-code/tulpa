@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/v2/spinner"
 	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/catwalk/pkg/catwalk"
+	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/tulpa-code/tulpa/internal/app"
 	"github.com/tulpa-code/tulpa/internal/config"
 	"github.com/tulpa-code/tulpa/internal/history"
@@ -36,7 +37,6 @@ import (
 	"github.com/tulpa-code/tulpa/internal/tui/styles"
 	"github.com/tulpa-code/tulpa/internal/tui/util"
 	"github.com/tulpa-code/tulpa/internal/version"
-	"github.com/charmbracelet/lipgloss/v2"
 )
 
 var ChatPageID page.PageID = "chat"
@@ -144,7 +144,7 @@ func (p *chatPage) Init() tea.Cmd {
 		p.isOnboarding = true
 		p.splashFullScreen = true
 	} else if b, _ := config.ProjectNeedsInitialization(); b {
-		// Project needs CRUSH.md initialization
+		// Project needs TULPA.md initialization
 		p.splash.SetProjectInit(true)
 		p.isProjectInit = true
 		p.splashFullScreen = true

@@ -57,7 +57,7 @@ func buildCommandSources(cfg *config.Config) []commandSource {
 	// Home directory
 	if home := home.Dir(); home != "" {
 		sources = append(sources, commandSource{
-			path:   filepath.Join(home, ".crush", "commands"),
+			path:   filepath.Join(home, ".tulpa", "commands"),
 			prefix: UserCommandPrefix,
 		})
 	}
@@ -79,7 +79,7 @@ func getXDGCommandsDir() string {
 		}
 	}
 	if xdgHome != "" {
-		return filepath.Join(xdgHome, "crush", "commands")
+		return filepath.Join(xdgHome, "tulpa", "commands")
 	}
 	return ""
 }

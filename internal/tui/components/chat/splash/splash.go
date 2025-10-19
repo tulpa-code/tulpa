@@ -465,7 +465,7 @@ func (s *splashCmp) View() string {
 			pathStyle.Render(s.cwd()),
 			"",
 			bodyStyle.Render("When I initialize your codebase I examine the project and put the"),
-			bodyStyle.Render("result into a CRUSH.md file which serves as general context."),
+			bodyStyle.Render("result into a TULPA.md file which serves as general context."),
 			"",
 			bodyStyle.Render("You can also initialize anytime via ")+shortcutStyle.Render("ctrl+p")+bodyStyle.Render("."),
 			"",

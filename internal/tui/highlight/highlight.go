@@ -28,7 +28,7 @@ func SyntaxHighlight(source, fileName string, bg color.Color) (string, error) {
 		f = formatters.Fallback
 	}
 
-	style := chroma.MustNewStyle("crush", styles.GetChromaTheme())
+	style := chroma.MustNewStyle("tulpa", styles.GetChromaTheme())
 
 	// Modify the style to use the provided background
 	s, err := style.Builder().Transform(
