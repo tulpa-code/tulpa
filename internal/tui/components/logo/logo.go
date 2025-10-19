@@ -25,7 +25,7 @@ type Opts struct {
 // Render renders the Tulpa logo. Set the argument to true to render the narrow
 // version, intended for use in a sidebar.
 func Render(version string, compact bool, o Opts) string {
-	const tulpaTag = " Stay Focused"
+	const tulpaTag = "Stay Focused"
 
 	fg := func(c color.Color, s string) string {
 		return lipgloss.NewStyle().Foreground(c).Render(s)
@@ -33,13 +33,12 @@ func Render(version string, compact bool, o Opts) string {
 
 	// Simple ASCII art for TULPA
 	asciiArt := `
-░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓███████▓▒░ ░▒▓██████▓▒░
-   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░
-   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░
-   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓███████▓▒░░▒▓████████▓▒░
-   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
-   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
-   ░▒▓█▓▒░    ░▒▓██████▓▒░░▒▓████████▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
+████████╗██╗   ██╗██╗     ██████╗  █████╗
+╚══██╔══╝██║   ██║██║     ██╔══██╗██╔══██╗
+   ██║   ██║   ██║██║     ██████╔╝███████║
+   ██║   ██║   ██║██║     ██╔═══╝ ██╔══██║
+   ██║   ╚██████╔╝███████╗██║     ██║  ██║
+   ╚═╝    ╚═════╝ ╚══════╝╚═╝     ╚═╝  ╚═╝
 `
 
 	// Remove leading/trailing whitespace and split into lines
