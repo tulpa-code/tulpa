@@ -10,8 +10,8 @@ func NewCharmtoneTheme() *Theme {
 		Name:   "charmtone",
 		IsDark: true,
 
-		Primary:   charmtone.Charple,
-		Secondary: charmtone.Dolly,
+		Primary:   charmtone.Guac,
+		Secondary: charmtone.Guac,
 		Tertiary:  charmtone.Bok,
 		Accent:    charmtone.Zest,
 
@@ -26,7 +26,7 @@ func NewCharmtoneTheme() *Theme {
 		FgMuted:     charmtone.Squid,
 		FgHalfMuted: charmtone.Smoke,
 		FgSubtle:    charmtone.Oyster,
-		FgSelected:  charmtone.Salt,
+		FgSelected:  charmtone.Pepper,
 
 		// Borders
 		Border:      charmtone.Charcoal,
@@ -58,7 +58,7 @@ func NewCharmtoneTheme() *Theme {
 	}
 
 	// Text selection.
-	t.TextSelection = lipgloss.NewStyle().Foreground(charmtone.Salt).Background(charmtone.Charple)
+	t.TextSelection = lipgloss.NewStyle().Foreground(charmtone.Pepper).Background(charmtone.Charple).Bold(true)
 
 	// LSP and MCP status.
 	t.ItemOfflineIcon = lipgloss.NewStyle().Foreground(charmtone.Squid).SetString("●")

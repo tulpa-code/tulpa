@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/crush/internal/config"
-	"github.com/charmbracelet/crush/internal/permission"
-	"github.com/charmbracelet/crush/internal/shell"
+	"github.com/tulpa-code/tulpa/internal/config"
+	"github.com/tulpa-code/tulpa/internal/permission"
+	"github.com/tulpa-code/tulpa/internal/shell"
 )
 
 type BashParams struct {
@@ -147,16 +147,16 @@ func (b *bashTool) bashDescription() string {
 
 	// Build PR attribution
 	if generatedWith {
-		prAttribution = "💘 Generated with Crush"
+		prAttribution = "💘 Generated with Tulpa"
 	}
 
 	if generatedWith || coAuthoredBy {
 		var attributionParts []string
 		if generatedWith {
-			attributionParts = append(attributionParts, "💘 Generated with Crush")
+			attributionParts = append(attributionParts, "💘 Generated with Tulpa")
 		}
 		if coAuthoredBy {
-			attributionParts = append(attributionParts, "Co-Authored-By: Crush <crush@charm.land>")
+			attributionParts = append(attributionParts, "Co-Authored-By: Tulpa <team@tulpa.dev>")
 		}
 
 		if len(attributionParts) > 0 {

@@ -5,9 +5,9 @@ import (
 	"maps"
 	"time"
 
-	"github.com/charmbracelet/crush/internal/csync"
-	"github.com/charmbracelet/crush/internal/lsp"
-	"github.com/charmbracelet/crush/internal/pubsub"
+	"github.com/tulpa-code/tulpa/internal/csync"
+	"github.com/tulpa-code/tulpa/internal/lsp"
+	"github.com/tulpa-code/tulpa/internal/pubsub"
 )
 
 // LSPEventType represents the type of LSP event

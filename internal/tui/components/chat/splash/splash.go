@@ -9,21 +9,21 @@ import (
 	"github.com/charmbracelet/bubbles/v2/spinner"
 	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/catwalk/pkg/catwalk"
-	"github.com/charmbracelet/crush/internal/config"
-	"github.com/charmbracelet/crush/internal/home"
-	"github.com/charmbracelet/crush/internal/llm/prompt"
-	"github.com/charmbracelet/crush/internal/tui/components/chat"
-	"github.com/charmbracelet/crush/internal/tui/components/core"
-	"github.com/charmbracelet/crush/internal/tui/components/core/layout"
-	"github.com/charmbracelet/crush/internal/tui/components/dialogs/models"
-	"github.com/charmbracelet/crush/internal/tui/components/logo"
-	lspcomponent "github.com/charmbracelet/crush/internal/tui/components/lsp"
-	"github.com/charmbracelet/crush/internal/tui/components/mcp"
-	"github.com/charmbracelet/crush/internal/tui/exp/list"
-	"github.com/charmbracelet/crush/internal/tui/styles"
-	"github.com/charmbracelet/crush/internal/tui/util"
-	"github.com/charmbracelet/crush/internal/version"
 	"github.com/charmbracelet/lipgloss/v2"
+	"github.com/tulpa-code/tulpa/internal/config"
+	"github.com/tulpa-code/tulpa/internal/home"
+	"github.com/tulpa-code/tulpa/internal/llm/prompt"
+	"github.com/tulpa-code/tulpa/internal/tui/components/chat"
+	"github.com/tulpa-code/tulpa/internal/tui/components/core"
+	"github.com/tulpa-code/tulpa/internal/tui/components/core/layout"
+	"github.com/tulpa-code/tulpa/internal/tui/components/dialogs/models"
+	"github.com/tulpa-code/tulpa/internal/tui/components/logo"
+	lspcomponent "github.com/tulpa-code/tulpa/internal/tui/components/lsp"
+	"github.com/tulpa-code/tulpa/internal/tui/components/mcp"
+	"github.com/tulpa-code/tulpa/internal/tui/exp/list"
+	"github.com/tulpa-code/tulpa/internal/tui/styles"
+	"github.com/tulpa-code/tulpa/internal/tui/util"
+	"github.com/tulpa-code/tulpa/internal/version"
 )
 
 type Splash interface {
@@ -465,7 +465,7 @@ func (s *splashCmp) View() string {
 			pathStyle.Render(s.cwd()),
 			"",
 			bodyStyle.Render("When I initialize your codebase I examine the project and put the"),
-			bodyStyle.Render("result into a CRUSH.md file which serves as general context."),
+			bodyStyle.Render("result into a TULPA.md file which serves as general context."),
 			"",
 			bodyStyle.Render("You can also initialize anytime via ")+shortcutStyle.Render("ctrl+p")+bodyStyle.Render("."),
 			"",
@@ -575,12 +575,12 @@ func (s *splashCmp) logoBlock() string {
 	}
 	return logoStyle.Render(
 		logo.Render(version.Version, false, logo.Opts{
-			FieldColor:   t.Primary,
-			TitleColorA:  t.Secondary,
-			TitleColorB:  t.Primary,
-			CharmColor:   t.Secondary,
-			VersionColor: t.Primary,
-			Width:        s.width - logoStyle.GetHorizontalFrameSize(),
+			FieldColor:    t.Primary,
+			TitleColorA:   t.Secondary,
+			TitleColorB:   t.Primary,
+			SubtitleColor: t.Secondary,
+			VersionColor:  t.Primary,
+			Width:         s.width - logoStyle.GetHorizontalFrameSize(),
 		}),
 	)
 }

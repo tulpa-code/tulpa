@@ -13,22 +13,22 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/colorprofile"
-	"github.com/charmbracelet/crush/internal/app"
-	"github.com/charmbracelet/crush/internal/config"
-	"github.com/charmbracelet/crush/internal/db"
-	"github.com/charmbracelet/crush/internal/event"
-	"github.com/charmbracelet/crush/internal/tui"
-	"github.com/charmbracelet/crush/internal/version"
 	"github.com/charmbracelet/fang"
 	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/charmbracelet/x/exp/charmtone"
 	"github.com/charmbracelet/x/term"
 	"github.com/spf13/cobra"
+	"github.com/tulpa-code/tulpa/internal/app"
+	"github.com/tulpa-code/tulpa/internal/config"
+	"github.com/tulpa-code/tulpa/internal/db"
+	"github.com/tulpa-code/tulpa/internal/event"
+	"github.com/tulpa-code/tulpa/internal/tui"
+	"github.com/tulpa-code/tulpa/internal/version"
 )
 
 func init() {
 	rootCmd.PersistentFlags().StringP("cwd", "c", "", "Current working directory")
-	rootCmd.PersistentFlags().StringP("data-dir", "D", "", "Custom crush data directory")
+	rootCmd.PersistentFlags().StringP("data-dir", "D", "", "Custom tulpa data directory")
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "Debug")
 
 	rootCmd.Flags().BoolP("help", "h", false, "Help")
@@ -44,32 +44,32 @@ func init() {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "crush",
+	Use:   "tulpa",
 	Short: "Terminal-based AI assistant for software development",
-	Long: `Crush is a powerful terminal-based AI assistant that helps with software development tasks.
+	Long: `Tulpa is a powerful terminal-based AI assistant that helps with software development tasks.
 It provides an interactive chat interface with AI capabilities, code analysis, and LSP integration
 to assist developers in writing, debugging, and understanding code directly from the terminal.`,
 	Example: `
 # Run in interactive mode
-crush
+tulpa
 
 # Run with debug logging
-crush -d
+tulpa -d
 
 # Run with debug logging in a specific directory
-crush -d -c /path/to/project
+tulpa -d -c /path/to/project
 
 # Run with custom data directory
-crush -D /path/to/custom/.crush
+tulpa -D /path/to/custom/.tulpa
 
 # Print version
-crush -v
+tulpa -v
 
 # Run a single non-interactive prompt
-crush run "Explain the use of context in Go"
+tulpa run "Explain the use of context in Go"
 
 # Run in dangerous mode (auto-accept all permissions)
-crush -y
+tulpa -y
   `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		app, err := setupApp(cmd)
@@ -94,7 +94,7 @@ crush -y
 		if _, err := program.Run(); err != nil {
 			event.Error(err)
 			slog.Error("TUI run error", "error", err)
-			return errors.New("Crush crashed. If metrics are enabled, we were notified about it. If you'd like to report it, please copy the stacktrace above and open an issue at https://github.com/charmbracelet/crush/issues/new?template=bug.yml") //nolint:staticcheck
+			return errors.New("Tulpa crashed. If metrics are enabled, we were notified about it. If you'd like to report it, please copy the stacktrace above and open an issue at https://github.com/tulpa-code/tulpa/issues/new?template=bug.yml") //nolint:staticcheck
 		}
 		return nil
 	},
@@ -169,7 +169,7 @@ func setupApp(cmd *cobra.Command) (*app.App, error) {
 	}
 	cfg.Permissions.SkipRequests = yolo
 
-	if err := createDotCrushDir(cfg.Options.DataDirectory); err != nil {
+	if err := createDotTulpaDir(cfg.Options.DataDirectory); err != nil {
 		return nil, err
 	}
 
@@ -193,7 +193,7 @@ func setupApp(cmd *cobra.Command) (*app.App, error) {
 }
 
 func shouldEnableMetrics() bool {
-	if v, _ := strconv.ParseBool(os.Getenv("CRUSH_DISABLE_METRICS")); v {
+	if v, _ := strconv.ParseBool(os.Getenv("TULPA_DISABLE_METRICS")); v {
 		return false
 	}
 	if v, _ := strconv.ParseBool(os.Getenv("DO_NOT_TRACK")); v {
@@ -239,7 +239,7 @@ func ResolveCwd(cmd *cobra.Command) (string, error) {
 	return cwd, nil
 }
 
-func createDotCrushDir(dir string) error {
+func createDotTulpaDir(dir string) error {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return fmt.Errorf("failed to create data directory: %q %w", dir, err)
 	}

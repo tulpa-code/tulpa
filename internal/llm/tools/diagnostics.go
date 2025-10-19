@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/crush/internal/csync"
-	"github.com/charmbracelet/crush/internal/lsp"
+	"github.com/tulpa-code/tulpa/internal/csync"
+	"github.com/tulpa-code/tulpa/internal/lsp"
 	"github.com/charmbracelet/x/powernap/pkg/lsp/protocol"
 )
 

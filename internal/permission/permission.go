@@ -8,8 +8,8 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/charmbracelet/crush/internal/csync"
-	"github.com/charmbracelet/crush/internal/pubsub"
+	"github.com/tulpa-code/tulpa/internal/csync"
+	"github.com/tulpa-code/tulpa/internal/pubsub"
 	"github.com/google/uuid"
 )
 

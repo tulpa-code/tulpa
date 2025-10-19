@@ -8,13 +8,14 @@ import (
 	"reflect"
 	"runtime"
 
-	"github.com/charmbracelet/crush/internal/version"
 	"github.com/posthog/posthog-go"
+	"github.com/tulpa-code/tulpa/internal/version"
 )
 
 const (
-	endpoint = "https://data.charm.land"
-	key      = "phc_4zt4VgDWLqbYnJYEwLRxFoaTL2noNrQij0C6E8k3I0V"
+	// Analytics disabled for Tulpa independence
+	endpoint = ""
+	key      = ""
 )
 
 var (
@@ -30,15 +31,8 @@ var (
 )
 
 func Init() {
-	c, err := posthog.NewWithConfig(key, posthog.Config{
-		Endpoint: endpoint,
-		Logger:   logger{},
-	})
-	if err != nil {
-		slog.Error("Failed to initialize PostHog client", "error", err)
-	}
-	client = c
-	distinctId = getDistinctId()
+	// Analytics disabled for Tulpa independence
+	client = nil
 }
 
 // send logs an event to PostHog with the given event name and properties.

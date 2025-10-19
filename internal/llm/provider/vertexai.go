@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/charmbracelet/crush/internal/config"
-	"github.com/charmbracelet/crush/internal/log"
+	"github.com/tulpa-code/tulpa/internal/config"
+	"github.com/tulpa-code/tulpa/internal/log"
 	"google.golang.org/genai"
 )
 

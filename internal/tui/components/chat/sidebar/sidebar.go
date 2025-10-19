@@ -8,26 +8,25 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/catwalk/pkg/catwalk"
-	"github.com/charmbracelet/crush/internal/config"
-	"github.com/charmbracelet/crush/internal/csync"
-	"github.com/charmbracelet/crush/internal/diff"
-	"github.com/charmbracelet/crush/internal/fsext"
-	"github.com/charmbracelet/crush/internal/history"
-	"github.com/charmbracelet/crush/internal/home"
-	"github.com/charmbracelet/crush/internal/lsp"
-	"github.com/charmbracelet/crush/internal/pubsub"
-	"github.com/charmbracelet/crush/internal/session"
-	"github.com/charmbracelet/crush/internal/tui/components/chat"
-	"github.com/charmbracelet/crush/internal/tui/components/core"
-	"github.com/charmbracelet/crush/internal/tui/components/core/layout"
-	"github.com/charmbracelet/crush/internal/tui/components/files"
-	"github.com/charmbracelet/crush/internal/tui/components/logo"
-	lspcomponent "github.com/charmbracelet/crush/internal/tui/components/lsp"
-	"github.com/charmbracelet/crush/internal/tui/components/mcp"
-	"github.com/charmbracelet/crush/internal/tui/styles"
-	"github.com/charmbracelet/crush/internal/tui/util"
-	"github.com/charmbracelet/crush/internal/version"
 	"github.com/charmbracelet/lipgloss/v2"
+	"github.com/tulpa-code/tulpa/internal/config"
+	"github.com/tulpa-code/tulpa/internal/csync"
+	"github.com/tulpa-code/tulpa/internal/diff"
+	"github.com/tulpa-code/tulpa/internal/fsext"
+	"github.com/tulpa-code/tulpa/internal/history"
+	"github.com/tulpa-code/tulpa/internal/home"
+	"github.com/tulpa-code/tulpa/internal/lsp"
+	"github.com/tulpa-code/tulpa/internal/pubsub"
+	"github.com/tulpa-code/tulpa/internal/session"
+	"github.com/tulpa-code/tulpa/internal/tui/components/chat"
+	"github.com/tulpa-code/tulpa/internal/tui/components/core"
+	"github.com/tulpa-code/tulpa/internal/tui/components/core/layout"
+	"github.com/tulpa-code/tulpa/internal/tui/components/files"
+	"github.com/tulpa-code/tulpa/internal/tui/components/logo"
+	lspcomponent "github.com/tulpa-code/tulpa/internal/tui/components/lsp"
+	"github.com/tulpa-code/tulpa/internal/tui/components/mcp"
+	"github.com/tulpa-code/tulpa/internal/tui/styles"
+	"github.com/tulpa-code/tulpa/internal/tui/util"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -124,14 +123,9 @@ func (m *sidebarCmp) View() string {
 	}
 
 	if !m.compactMode {
-		if m.height > LogoHeightBreakpoint {
-			parts = append(parts, m.logo)
-		} else {
-			// Use a smaller logo for smaller screens
-			parts = append(parts,
-				logo.SmallRender(m.width-style.GetHorizontalFrameSize()),
-				"")
-		}
+		parts = append(parts,
+			logo.SmallRender(m.width-style.GetHorizontalFrameSize()),
+			"")
 	}
 
 	if !m.compactMode && m.session.ID != "" {
@@ -277,16 +271,9 @@ func (m *sidebarCmp) GetSize() (int, int) {
 	return m.width, m.height
 }
 
+// logoBlock is no longer used - sidebar always uses SmallRender now
 func (m *sidebarCmp) logoBlock() string {
-	t := styles.CurrentTheme()
-	return logo.Render(version.Version, true, logo.Opts{
-		FieldColor:   t.Primary,
-		TitleColorA:  t.Secondary,
-		TitleColorB:  t.Primary,
-		CharmColor:   t.Secondary,
-		VersionColor: t.Primary,
-		Width:        m.width - 2,
-	})
+	return ""
 }
 
 func (m *sidebarCmp) getMaxWidth() int {

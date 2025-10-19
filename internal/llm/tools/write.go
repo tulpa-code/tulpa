@@ -11,13 +11,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/crush/internal/csync"
-	"github.com/charmbracelet/crush/internal/diff"
-	"github.com/charmbracelet/crush/internal/fsext"
-	"github.com/charmbracelet/crush/internal/history"
+	"github.com/tulpa-code/tulpa/internal/csync"
+	"github.com/tulpa-code/tulpa/internal/diff"
+	"github.com/tulpa-code/tulpa/internal/fsext"
+	"github.com/tulpa-code/tulpa/internal/history"
 
-	"github.com/charmbracelet/crush/internal/lsp"
-	"github.com/charmbracelet/crush/internal/permission"
+	"github.com/tulpa-code/tulpa/internal/lsp"
+	"github.com/tulpa-code/tulpa/internal/permission"
 )
 
 //go:embed write.md

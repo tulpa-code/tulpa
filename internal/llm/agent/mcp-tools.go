@@ -15,14 +15,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/crush/internal/config"
-	"github.com/charmbracelet/crush/internal/csync"
-	"github.com/charmbracelet/crush/internal/home"
-	"github.com/charmbracelet/crush/internal/llm/tools"
-	"github.com/charmbracelet/crush/internal/permission"
-	"github.com/charmbracelet/crush/internal/pubsub"
-	"github.com/charmbracelet/crush/internal/version"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/tulpa-code/tulpa/internal/config"
+	"github.com/tulpa-code/tulpa/internal/csync"
+	"github.com/tulpa-code/tulpa/internal/home"
+	"github.com/tulpa-code/tulpa/internal/llm/tools"
+	"github.com/tulpa-code/tulpa/internal/permission"
+	"github.com/tulpa-code/tulpa/internal/pubsub"
+	"github.com/tulpa-code/tulpa/internal/version"
 )
 
 // MCPState represents the current state of an MCP client
@@ -352,9 +352,9 @@ func createMCPSession(ctx context.Context, name string, m config.MCPConfig, reso
 
 	client := mcp.NewClient(
 		&mcp.Implementation{
-			Name:    "crush",
+			Name:    "tulpa",
 			Version: version.Version,
-			Title:   "Crush",
+			Title:   "Tulpa",
 		},
 		&mcp.ClientOptions{
 			ToolListChangedHandler: func(context.Context, *mcp.ToolListChangedRequest) {

@@ -5,10 +5,10 @@ import (
 
 	"github.com/charmbracelet/lipgloss/v2"
 
-	"github.com/charmbracelet/crush/internal/config"
-	"github.com/charmbracelet/crush/internal/llm/agent"
-	"github.com/charmbracelet/crush/internal/tui/components/core"
-	"github.com/charmbracelet/crush/internal/tui/styles"
+	"github.com/tulpa-code/tulpa/internal/config"
+	"github.com/tulpa-code/tulpa/internal/llm/agent"
+	"github.com/tulpa-code/tulpa/internal/tui/components/core"
+	"github.com/tulpa-code/tulpa/internal/tui/styles"
 )
 
 // RenderOptions contains options for rendering MCP lists.

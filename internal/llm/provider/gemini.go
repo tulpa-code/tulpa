@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/charmbracelet/catwalk/pkg/catwalk"
-	"github.com/charmbracelet/crush/internal/config"
-	"github.com/charmbracelet/crush/internal/llm/tools"
-	"github.com/charmbracelet/crush/internal/log"
-	"github.com/charmbracelet/crush/internal/message"
+	"github.com/tulpa-code/tulpa/internal/config"
+	"github.com/tulpa-code/tulpa/internal/llm/tools"
+	"github.com/tulpa-code/tulpa/internal/log"
+	"github.com/tulpa-code/tulpa/internal/message"
 	"github.com/google/uuid"
 	"google.golang.org/genai"
 )

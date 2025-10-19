@@ -21,6 +21,7 @@ go.work.sum
 # IDE specific files
 .idea/
 .vscode/
+.tmp/
 *.swp
 *.swo
 
@@ -42,9 +43,9 @@ Thumbs.db
 .env
 .env.local
 
-**/.crush/**
+**/.tulpa/**
 
-/crush
+/tulpa
 
 manpages/
 completions/

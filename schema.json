@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/charmbracelet/crush/internal/config/config",
+  "$id": "https://github.com/tulpa-code/tulpa/internal/config/config",
   "$ref": "#/$defs/Config",
   "$defs": {
     "Attribution": {
@@ -12,7 +12,7 @@
         },
         "generated_with": {
           "type": "boolean",
-          "description": "Add Generated with Crush line to commit messages and issues and PRs",
+          "description": "Add Generated with Tulpa line to commit messages and issues and PRs",
           "default": true
         }
       },
@@ -25,17 +25,13 @@
           "type": "integer",
           "description": "Maximum depth for the ls tool",
           "default": 0,
-          "examples": [
-            10
-          ]
+          "examples": [10]
         },
         "max_items": {
           "type": "integer",
           "description": "Maximum number of items to return for the ls tool",
           "default": 1000,
-          "examples": [
-            100
-          ]
+          "examples": [100]
         }
       },
       "additionalProperties": false,
@@ -83,9 +79,7 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "required": [
-        "tools"
-      ]
+      "required": ["tools"]
     },
     "LSPConfig": {
       "properties": {
@@ -97,9 +91,7 @@
         "command": {
           "type": "string",
           "description": "Command to execute for the LSP server",
-          "examples": [
-            "gopls"
-          ]
+          "examples": ["gopls"]
         },
         "args": {
           "items": {
@@ -118,14 +110,7 @@
         "filetypes": {
           "items": {
             "type": "string",
-            "examples": [
-              "go",
-              "mod",
-              "rs",
-              "c",
-              "js",
-              "ts"
-            ]
+            "examples": ["go", "mod", "rs", "c", "js", "ts"]
           },
           "type": "array",
           "description": "File types this LSP server handles"
@@ -133,11 +118,7 @@
         "root_markers": {
           "items": {
             "type": "string",
-            "examples": [
-              "go.mod",
-              "package.json",
-              "Cargo.toml"
-            ]
+            "examples": ["go.mod", "package.json", "Cargo.toml"]
           },
           "type": "array",
           "description": "Files or directories that indicate the project root"
@@ -153,9 +134,7 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "required": [
-        "command"
-      ]
+      "required": ["command"]
     },
     "LSPs": {
       "additionalProperties": {
@@ -168,9 +147,7 @@
         "command": {
           "type": "string",
           "description": "Command to execute for stdio MCP servers",
-          "examples": [
-            "npx"
-          ]
+          "examples": ["npx"]
         },
         "env": {
           "additionalProperties": {
@@ -188,11 +165,7 @@
         },
         "type": {
           "type": "string",
-          "enum": [
-            "stdio",
-            "sse",
-            "http"
-          ],
+          "enum": ["stdio", "sse", "http"],
           "description": "Type of MCP connection",
           "default": "stdio"
         },
@@ -200,9 +173,7 @@
           "type": "string",
           "format": "uri",
           "description": "URL for HTTP or SSE MCP servers",
-          "examples": [
-            "http://localhost:3000/mcp"
-          ]
+          "examples": ["http://localhost:3000/mcp"]
         },
         "disabled": {
           "type": "boolean",
@@ -213,11 +184,7 @@
           "type": "integer",
           "description": "Timeout in seconds for MCP server connections",
           "default": 15,
-          "examples": [
-            30,
-            60,
-            120
-          ]
+          "examples": [30, 60, 120]
         },
         "headers": {
           "additionalProperties": {
@@ -229,9 +196,7 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "required": [
-        "type"
-      ]
+      "required": ["type"]
     },
     "MCPs": {
       "additionalProperties": {
@@ -299,10 +264,7 @@
         "context_paths": {
           "items": {
             "type": "string",
-            "examples": [
-              ".cursorrules",
-              "CRUSH.md"
-            ]
+            "examples": [".cursorrules", "TULPA.md"]
           },
           "type": "array",
           "description": "Paths to files containing context information for the AI"
@@ -329,10 +291,8 @@
         "data_directory": {
           "type": "string",
           "description": "Directory for storing application data (relative to working directory)",
-          "default": ".crush",
-          "examples": [
-            ".crush"
-          ]
+          "default": ".tulpa",
+          "examples": [".tulpa"]
         },
         "disabled_tools": {
           "items": {
@@ -358,19 +318,14 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "required": [
-        "disabled_tools"
-      ]
+      "required": ["disabled_tools"]
     },
     "Permissions": {
       "properties": {
         "allowed_tools": {
           "items": {
             "type": "string",
-            "examples": [
-              "bash",
-              "view"
-            ]
+            "examples": ["bash", "view"]
           },
           "type": "array",
           "description": "List of tools that don't require permission prompts"
@@ -384,43 +339,29 @@
         "id": {
           "type": "string",
           "description": "Unique identifier for the provider",
-          "examples": [
-            "openai"
-          ]
+          "examples": ["openai"]
         },
         "name": {
           "type": "string",
           "description": "Human-readable name for the provider",
-          "examples": [
-            "OpenAI"
-          ]
+          "examples": ["OpenAI"]
         },
         "base_url": {
           "type": "string",
           "format": "uri",
           "description": "Base URL for the provider's API",
-          "examples": [
-            "https://api.openai.com/v1"
-          ]
+          "examples": ["https://api.openai.com/v1"]
         },
         "type": {
           "type": "string",
-          "enum": [
-            "openai",
-            "anthropic",
-            "gemini",
-            "azure",
-            "vertexai"
-          ],
+          "enum": ["openai", "anthropic", "gemini", "azure", "vertexai"],
           "description": "Provider type that determines the API format",
           "default": "openai"
         },
         "api_key": {
           "type": "string",
           "description": "API key for authentication with the provider",
-          "examples": [
-            "$OPENAI_API_KEY"
-          ]
+          "examples": ["$OPENAI_API_KEY"]
         },
         "disable": {
           "type": "boolean",
@@ -458,24 +399,16 @@
         "model": {
           "type": "string",
           "description": "The model ID as used by the provider API",
-          "examples": [
-            "gpt-4o"
-          ]
+          "examples": ["gpt-4o"]
         },
         "provider": {
           "type": "string",
           "description": "The model provider ID that matches a key in the providers config",
-          "examples": [
-            "openai"
-          ]
+          "examples": ["openai"]
         },
         "reasoning_effort": {
           "type": "string",
-          "enum": [
-            "low",
-            "medium",
-            "high"
-          ],
+          "enum": ["low", "medium", "high"],
           "description": "Reasoning effort level for OpenAI models that support it"
         },
         "max_tokens": {
@@ -483,9 +416,7 @@
           "maximum": 200000,
           "minimum": 1,
           "description": "Maximum number of tokens for model responses",
-          "examples": [
-            4096
-          ]
+          "examples": [4096]
         },
         "think": {
           "type": "boolean",
@@ -494,10 +425,7 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "required": [
-        "model",
-        "provider"
-      ]
+      "required": ["model", "provider"]
     },
     "TUIOptions": {
       "properties": {
@@ -508,10 +436,7 @@
         },
         "diff_mode": {
           "type": "string",
-          "enum": [
-            "unified",
-            "split"
-          ],
+          "enum": ["unified", "split"],
           "description": "Diff mode for the TUI interface"
         },
         "completions": {
@@ -521,9 +446,7 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "required": [
-        "completions"
-      ]
+      "required": ["completions"]
     },
     "ToolLs": {
       "properties": {
@@ -531,17 +454,13 @@
           "type": "integer",
           "description": "Maximum depth for the ls tool",
           "default": 0,
-          "examples": [
-            10
-          ]
+          "examples": [10]
         },
         "max_items": {
           "type": "integer",
           "description": "Maximum number of items to return for the ls tool",
           "default": 1000,
-          "examples": [
-            100
-          ]
+          "examples": [100]
         }
       },
       "additionalProperties": false,
@@ -555,9 +474,7 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "required": [
-        "ls"
-      ]
+      "required": ["ls"]
     }
   }
 }
