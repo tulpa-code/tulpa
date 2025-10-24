@@ -248,6 +248,50 @@ To customize the default coder or task agents:
 
 ## Troubleshooting
 
+### YAML Syntax Errors
+
+**Tulpa will NOT start** if your agent configuration files have syntax errors. This is intentional to prevent unexpected behavior.
+
+If Tulpa fails to start with an error like:
+```
+failed to load agent configurations from ~/.config/tulpa/agents:
+Errors found:
+  - coder.yaml: yaml: line 5: mapping values are not allowed in this context
+  - task.yaml: missing required field 'id'
+
+Please fix the YAML syntax errors and restart Tulpa.
+```
+
+**What to do:**
+
+1. **Check the error message** - it will tell you exactly which files have problems
+2. **Validate your YAML** - use a YAML validator or linter
+3. **Common mistakes:**
+   - Missing colons after keys
+   - Incorrect indentation (YAML is whitespace-sensitive)
+   - Mixing tabs and spaces (use spaces only)
+   - Missing `id` field (required)
+   - Missing `prompt` field (required)
+4. **Fix the errors** and restart Tulpa
+
+**Example of invalid YAML:**
+```yaml
+id: my-agent
+name My Agent  # Missing colon!
+prompt: |
+This is my prompt
+	with a tab instead of spaces  # Tabs not allowed!
+```
+
+**Example of valid YAML:**
+```yaml
+id: my-agent
+name: My Agent  # Correct: has colon
+prompt: |
+  This is my prompt
+  with proper indentation  # Using spaces
+```
+
 ### Agent not found
 
 If your custom agent isn't loading:
@@ -255,7 +299,7 @@ If your custom agent isn't loading:
 1. Check the file is in the correct directory: `~/.config/tulpa/agents/`
 2. Verify the file has a `.yaml` or `.yml` extension
 3. Ensure the `id` field is set and unique
-4. Validate the YAML syntax
+4. Validate the YAML syntax (Tulpa will error on invalid YAML)
 
 ### Tools not working
 
@@ -270,9 +314,12 @@ If tools aren't available to your agent:
 If your custom prompt isn't being used:
 
 1. Verify the `prompt` field is set in the YAML
-2. Check for YAML syntax errors
+2. Check for YAML syntax errors (Tulpa will fail to start)
 3. Ensure the agent ID matches the one you're using
-4. Restart Tulpa after making changes
+
+### No YAML files = Default agents
+
+If there are NO YAML files in `~/.config/tulpa/agents/`, Tulpa will automatically create default configurations for the `coder` and `task` agents. This only happens on first run or if the directory is empty.
 
 ## Advanced: Multiple Agent Configs
 

@@ -301,7 +301,7 @@ prompt: Valid
 		require.Contains(t, agents, "valid")
 	})
 
-	t.Run("skips configs without ID", func(t *testing.T) {
+	t.Run("returns error for configs without ID", func(t *testing.T) {
 		t.Parallel()
 
 		// Save original env and restore after test
@@ -329,9 +329,88 @@ prompt: Has no ID
 		require.NoError(t, err)
 
 		agents, prompts, err := LoadAgentsFromDirectory()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "missing required field 'id'")
+		require.Nil(t, agents)
+		require.Nil(t, prompts)
+	})
+
+	t.Run("returns error for invalid YAML syntax", func(t *testing.T) {
+		t.Parallel()
+
+		// Save original env and restore after test
+		originalXDG := os.Getenv("XDG_CONFIG_HOME")
+		t.Cleanup(func() {
+			if originalXDG != "" {
+				os.Setenv("XDG_CONFIG_HOME", originalXDG)
+			} else {
+				os.Unsetenv("XDG_CONFIG_HOME")
+			}
+		})
+
+		tmpDir := t.TempDir()
+		agentsDir := filepath.Join(tmpDir, "agents")
+		os.Setenv("XDG_CONFIG_HOME", tmpDir)
+
+		err := os.MkdirAll(agentsDir, 0o755)
 		require.NoError(t, err)
-		require.Empty(t, agents)
-		require.Empty(t, prompts)
+
+		// Create invalid YAML
+		invalidYAML := `id: test
+name: Test
+invalid yaml syntax: [[[
+`
+		err = os.WriteFile(filepath.Join(agentsDir, "invalid.yaml"), []byte(invalidYAML), 0o644)
+		require.NoError(t, err)
+
+		agents, prompts, err := LoadAgentsFromDirectory()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to load agent configurations")
+		require.Contains(t, err.Error(), "invalid.yaml")
+		require.Nil(t, agents)
+		require.Nil(t, prompts)
+	})
+
+	t.Run("returns error when some configs fail to load", func(t *testing.T) {
+		t.Parallel()
+
+		// Save original env and restore after test
+		originalXDG := os.Getenv("XDG_CONFIG_HOME")
+		t.Cleanup(func() {
+			if originalXDG != "" {
+				os.Setenv("XDG_CONFIG_HOME", originalXDG)
+			} else {
+				os.Unsetenv("XDG_CONFIG_HOME")
+			}
+		})
+
+		tmpDir := t.TempDir()
+		agentsDir := filepath.Join(tmpDir, "agents")
+		os.Setenv("XDG_CONFIG_HOME", tmpDir)
+
+		err := os.MkdirAll(agentsDir, 0o755)
+		require.NoError(t, err)
+
+		// Create one valid and one invalid config
+		validAgent := `id: valid
+name: Valid Agent
+prompt: Valid prompt
+`
+		invalidAgent := `id: invalid
+invalid: yaml: [[[
+`
+		err = os.WriteFile(filepath.Join(agentsDir, "valid.yaml"), []byte(validAgent), 0o644)
+		require.NoError(t, err)
+
+		err = os.WriteFile(filepath.Join(agentsDir, "invalid.yaml"), []byte(invalidAgent), 0o644)
+		require.NoError(t, err)
+
+		agents, prompts, err := LoadAgentsFromDirectory()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "some agent configurations failed to load")
+		require.Contains(t, err.Error(), "invalid.yaml")
+		require.Nil(t, agents)
+		require.Nil(t, prompts)
 	})
 }
 

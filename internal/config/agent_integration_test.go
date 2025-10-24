@@ -55,7 +55,8 @@ context_paths:
 			},
 		}
 
-		cfg.SetupAgents()
+		err = cfg.SetupAgents()
+		require.NoError(t, err)
 
 		require.NotNil(t, cfg.Agents)
 		require.NotNil(t, cfg.AgentPrompts)
@@ -111,7 +112,8 @@ tools:
 			},
 		}
 
-		cfg.SetupAgents()
+		err = cfg.SetupAgents()
+		require.NoError(t, err)
 
 		filteredAgent := cfg.Agents["filtered"]
 		require.NotContains(t, filteredAgent.AllowedTools, "bash")
@@ -153,7 +155,8 @@ prompt: Test
 			},
 		}
 
-		cfg.SetupAgents()
+		err = cfg.SetupAgents()
+		require.NoError(t, err)
 
 		noContextAgent := cfg.Agents["no-context"]
 		require.Equal(t, []string{".cursorrules", "TULPA.md"}, noContextAgent.ContextPaths)
@@ -196,13 +199,14 @@ context_paths:
 			},
 		}
 
-		cfg.SetupAgents()
+		err = cfg.SetupAgents()
+		require.NoError(t, err)
 
 		customContextAgent := cfg.Agents["custom-context"]
 		require.Equal(t, []string{"custom1.md", "custom2.md"}, customContextAgent.ContextPaths)
 	})
 
-	t.Run("falls back to hardcoded agents on error", func(t *testing.T) {
+	t.Run("returns error when YAML configs fail to load", func(t *testing.T) {
 		t.Parallel()
 
 		// Save original env and restore after test
@@ -215,8 +219,19 @@ context_paths:
 			}
 		})
 
-		// Point to a directory we can't create
-		os.Setenv("XDG_CONFIG_HOME", "/dev/null/impossible")
+		tmpDir := t.TempDir()
+		agentsDir := filepath.Join(tmpDir, "agents")
+		os.Setenv("XDG_CONFIG_HOME", tmpDir)
+
+		err := os.MkdirAll(agentsDir, 0o755)
+		require.NoError(t, err)
+
+		// Create an invalid YAML file
+		invalidYAML := `id: broken
+invalid: yaml: syntax: [[[
+`
+		err = os.WriteFile(filepath.Join(agentsDir, "broken.yaml"), []byte(invalidYAML), 0o644)
+		require.NoError(t, err)
 
 		cfg := &Config{
 			Options: &Options{
@@ -225,61 +240,10 @@ context_paths:
 			},
 		}
 
-		cfg.SetupAgents()
-
-		// Should have hardcoded agents
-		require.NotNil(t, cfg.Agents)
-		require.Contains(t, cfg.Agents, "coder")
-		require.Contains(t, cfg.Agents, "task")
+		// Should return error, not fall back to hardcoded
+		err = cfg.SetupAgents()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "agent configuration error")
 	})
 }
 
-func TestSetupHardcodedAgents(t *testing.T) {
-	t.Parallel()
-
-	t.Run("creates coder and task agents", func(t *testing.T) {
-		t.Parallel()
-
-		cfg := &Config{
-			Options: &Options{
-				ContextPaths:  []string{".cursorrules"},
-				DisabledTools: []string{},
-			},
-		}
-
-		cfg.setupHardcodedAgents()
-
-		require.Len(t, cfg.Agents, 2)
-		require.Contains(t, cfg.Agents, "coder")
-		require.Contains(t, cfg.Agents, "task")
-
-		coderAgent := cfg.Agents["coder"]
-		require.Equal(t, "Coder", coderAgent.Name)
-		require.Equal(t, SelectedModelTypeLarge, coderAgent.Model)
-		require.NotEmpty(t, coderAgent.AllowedTools)
-
-		taskAgent := cfg.Agents["task"]
-		require.Equal(t, "Task", taskAgent.Name)
-		require.Equal(t, SelectedModelTypeLarge, taskAgent.Model)
-		require.NotEmpty(t, taskAgent.AllowedTools)
-		require.Contains(t, taskAgent.AllowedTools, "grep")
-		require.Contains(t, taskAgent.AllowedTools, "view")
-		require.NotContains(t, taskAgent.AllowedTools, "bash")
-	})
-
-	t.Run("initializes empty agent prompts", func(t *testing.T) {
-		t.Parallel()
-
-		cfg := &Config{
-			Options: &Options{
-				ContextPaths:  []string{},
-				DisabledTools: []string{},
-			},
-		}
-
-		cfg.setupHardcodedAgents()
-
-		require.NotNil(t, cfg.AgentPrompts)
-		require.Empty(t, cfg.AgentPrompts)
-	})
-}

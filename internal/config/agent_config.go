@@ -158,32 +158,41 @@ func AgentsConfigDir() string {
 }
 
 // LoadAgentsFromDirectory loads all agent configurations from the agents directory.
+// Returns:
+// - agents: map of agent ID to Agent config
+// - prompts: map of agent ID to custom prompt
+// - error: nil on success, error if YAML files exist but are invalid
+//
+// Behavior:
+// - If no YAML files exist: creates defaults and loads them
+// - If YAML files exist but are invalid: returns descriptive error (caller should exit)
+// - If directory cannot be accessed: returns error
 func LoadAgentsFromDirectory() (map[string]Agent, map[string]string, error) {
 	agentsDir := AgentsConfigDir()
 
 	// Create directory if it doesn't exist
 	if err := os.MkdirAll(agentsDir, 0o755); err != nil {
-		return nil, nil, fmt.Errorf("failed to create agents directory: %w", err)
+		return nil, nil, fmt.Errorf("failed to create agents directory %s: %w", agentsDir, err)
 	}
 
 	// Check if directory exists and has any yaml files
 	entries, err := os.ReadDir(agentsDir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to read agents directory: %w", err)
+		return nil, nil, fmt.Errorf("failed to read agents directory %s: %w", agentsDir, err)
 	}
 
-	// If no YAML files exist, create defaults
-	hasYAML := false
+	// Count YAML files
+	yamlFiles := []string{}
 	for _, entry := range entries {
 		if !entry.IsDir() && (filepath.Ext(entry.Name()) == ".yaml" || filepath.Ext(entry.Name()) == ".yml") {
-			hasYAML = true
-			break
+			yamlFiles = append(yamlFiles, entry.Name())
 		}
 	}
 
-	if !hasYAML {
+	// If no YAML files exist, create defaults
+	if len(yamlFiles) == 0 {
 		if err := createDefaultAgentConfigs(agentsDir); err != nil {
-			return nil, nil, fmt.Errorf("failed to create default agent configs: %w", err)
+			return nil, nil, fmt.Errorf("failed to create default agent configs in %s: %w", agentsDir, err)
 		}
 		// Re-read directory
 		entries, err = os.ReadDir(agentsDir)
@@ -194,6 +203,7 @@ func LoadAgentsFromDirectory() (map[string]Agent, map[string]string, error) {
 
 	agents := make(map[string]Agent)
 	prompts := make(map[string]string)
+	var loadErrors []string
 
 	// Load all YAML files
 	for _, entry := range entries {
@@ -209,18 +219,44 @@ func LoadAgentsFromDirectory() (map[string]Agent, map[string]string, error) {
 		path := filepath.Join(agentsDir, entry.Name())
 		config, err := LoadAgentConfig(path)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to load agent config %s: %w", entry.Name(), err)
+			// Collect detailed error information
+			loadErrors = append(loadErrors, fmt.Sprintf("  - %s: %v", entry.Name(), err))
+			continue
 		}
 
 		if config.ID == "" {
-			continue // Skip configs without ID
+			loadErrors = append(loadErrors, fmt.Sprintf("  - %s: missing required field 'id'", entry.Name()))
+			continue
 		}
 
 		agents[config.ID] = config.ToAgent()
 		prompts[config.ID] = config.Prompt
 	}
 
+	// If we found YAML files but couldn't load any, return detailed error
+	if len(loadErrors) > 0 && len(agents) == 0 {
+		return nil, nil, fmt.Errorf("failed to load agent configurations from %s:\n%s\n\nPlease fix the YAML syntax errors and restart Tulpa.",
+			agentsDir,
+			formatErrorList(loadErrors))
+	}
+
+	// If we loaded some but not all, return partial error
+	if len(loadErrors) > 0 {
+		return nil, nil, fmt.Errorf("some agent configurations failed to load from %s:\n%s\n\nPlease fix the YAML syntax errors and restart Tulpa.",
+			agentsDir,
+			formatErrorList(loadErrors))
+	}
+
 	return agents, prompts, nil
+}
+
+// formatErrorList formats a list of errors for display.
+func formatErrorList(errors []string) string {
+	result := "Errors found:\n"
+	for _, err := range errors {
+		result += err + "\n"
+	}
+	return result
 }
 
 // createDefaultAgentConfigs creates default agent configuration files.
