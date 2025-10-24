@@ -97,7 +97,11 @@ func Load(workingDir, dataDir string, debug bool) (*Config, error) {
 	if err := cfg.configureSelectedModels(cfg.knownProviders); err != nil {
 		return nil, fmt.Errorf("failed to configure selected models: %w", err)
 	}
-	cfg.SetupAgents()
+
+	if err := cfg.SetupAgents(); err != nil {
+		return nil, err
+	}
+
 	return cfg, nil
 }
 

@@ -296,6 +296,8 @@ type Config struct {
 	workingDir string `json:"-"`
 	// TODO: most likely remove this concept when I come back to it
 	Agents map[string]Agent `json:"-"`
+	// Agent prompts loaded from YAML configs
+	AgentPrompts map[string]string `json:"-"`
 	// TODO: find a better way to do this this should probably not be part of the config
 	resolver       VariableResolver
 	dataConfigDir  string             `json:"-"`
@@ -497,31 +499,37 @@ func filterSlice(data []string, mask []string, include bool) []string {
 	return filtered
 }
 
-func (c *Config) SetupAgents() {
-	allowedTools := resolveAllowedTools(allToolNames(), c.Options.DisabledTools)
-
-	agents := map[string]Agent{
-		"coder": {
-			ID:           "coder",
-			Name:         "Coder",
-			Description:  "An agent that helps with executing coding tasks.",
-			Model:        SelectedModelTypeLarge,
-			ContextPaths: c.Options.ContextPaths,
-			AllowedTools: allowedTools,
-		},
-		"task": {
-			ID:           "task",
-			Name:         "Task",
-			Description:  "An agent that helps with searching for context and finding implementation details.",
-			Model:        SelectedModelTypeLarge,
-			ContextPaths: c.Options.ContextPaths,
-			AllowedTools: resolveReadOnlyTools(allowedTools),
-			// NO MCPs or LSPs by default
-			AllowedMCP: map[string][]string{},
-			AllowedLSP: []string{},
-		},
+func (c *Config) SetupAgents() error {
+	// Try to load agents from YAML configs
+	agents, prompts, err := LoadAgentsFromDirectory()
+	if err != nil {
+		// Do NOT fall back to hardcoded agents
+		// If YAML files exist but are invalid, the user must fix them
+		return fmt.Errorf("agent configuration error: %w", err)
 	}
+
+	// Apply disabled tools filter and context paths to all agents
+	allTools := allToolNames()
+	for id, agent := range agents {
+		// Apply disabled tools filter if AllowedTools is set
+		if len(agent.AllowedTools) > 0 {
+			agent.AllowedTools = resolveAllowedTools(agent.AllowedTools, c.Options.DisabledTools)
+		} else {
+			// If no tools specified, use all tools minus disabled
+			agent.AllowedTools = resolveAllowedTools(allTools, c.Options.DisabledTools)
+		}
+
+		// Override context paths if not set in YAML
+		if len(agent.ContextPaths) == 0 {
+			agent.ContextPaths = c.Options.ContextPaths
+		}
+
+		agents[id] = agent
+	}
+
 	c.Agents = agents
+	c.AgentPrompts = prompts
+	return nil
 }
 
 func (c *Config) Resolver() VariableResolver {

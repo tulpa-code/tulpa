@@ -122,7 +122,7 @@ func SmallRender(width int) string {
 	}
 
 	// Add version on top
-	versionText := t.S().Base.Foreground(t.Secondary).Render("v" + version.Version)
+	versionText := t.S().Base.Foreground(t.Secondary).Render(version.Version)
 
 	return versionText + "\n" + strings.Join(gradientLines, "\n")
 }
