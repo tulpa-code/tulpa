@@ -62,6 +62,15 @@ tasks:
     cmds:
       - go install -v .
 
+  dev-install:
+    desc: Build and copy tulpa binary to ~/.local/bin
+    deps:
+      - build
+    cmds:
+      - mkdir -p ~/.local/bin
+      - cp tulpa ~/.local/bin/tulpa
+      - echo "Installed tulpa to ~/.local/bin"
+
   profile:cpu:
     desc: 10s CPU profile
     cmds:
