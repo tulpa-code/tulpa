@@ -21,8 +21,6 @@ A read-only agent for searching and finding information, with limited tool acces
 ## YAML Configuration Format
 
 ```yaml
-# Agent identification (required)
-id: my-custom-agent
 name: My Custom Agent
 description: A custom agent for specific tasks
 
@@ -109,7 +107,6 @@ disabled: false
 ### Code Reviewer Agent
 
 ```yaml
-id: reviewer
 name: Code Reviewer
 description: Reviews code for style, bugs, and best practices
 
@@ -148,7 +145,6 @@ context_paths:
 ### Documentation Writer
 
 ```yaml
-id: docs
 name: Documentation Writer
 description: Writes and updates documentation
 
@@ -182,7 +178,6 @@ context_paths:
 ### Quick Scripter
 
 ```yaml
-id: scripter
 name: Quick Scripter
 description: Quickly creates scripts and utilities
 
@@ -270,13 +265,12 @@ Please fix the YAML syntax errors and restart Tulpa.
    - Missing colons after keys
    - Incorrect indentation (YAML is whitespace-sensitive)
    - Mixing tabs and spaces (use spaces only)
-   - Missing `id` field (required)
+   - Missing `name` field (required)
    - Missing `prompt` field (required)
 4. **Fix the errors** and restart Tulpa
 
 **Example of invalid YAML:**
 ```yaml
-id: my-agent
 name My Agent  # Missing colon!
 prompt: |
 This is my prompt
@@ -285,7 +279,6 @@ This is my prompt
 
 **Example of valid YAML:**
 ```yaml
-id: my-agent
 name: My Agent  # Correct: has colon
 prompt: |
   This is my prompt
@@ -298,7 +291,7 @@ If your custom agent isn't loading:
 
 1. Check the file is in the correct directory: `~/.config/tulpa/agents/`
 2. Verify the file has a `.yaml` or `.yml` extension
-3. Ensure the `id` field is set and unique
+3. Ensure the `name` field is set and unique
 4. Validate the YAML syntax (Tulpa will error on invalid YAML)
 
 ### Tools not working
@@ -315,7 +308,7 @@ If your custom prompt isn't being used:
 
 1. Verify the `prompt` field is set in the YAML
 2. Check for YAML syntax errors (Tulpa will fail to start)
-3. Ensure the agent ID matches the one you're using
+3. Ensure the agent name matches the one you're using
 
 ### No YAML files = Default agents
 

@@ -32,8 +32,7 @@ func TestSetupAgents(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create a custom agent
-		customAgent := `id: custom
-name: Custom Agent
+		customAgent := `name: Custom Agent
 description: A custom agent
 prompt: Custom prompt for testing
 model:
@@ -62,15 +61,15 @@ context_paths:
 		require.NotNil(t, cfg.AgentPrompts)
 
 		// Verify custom agent was loaded
-		require.Contains(t, cfg.Agents, "custom")
-		customAgentConfig := cfg.Agents["custom"]
+		require.Contains(t, cfg.Agents, "custom-agent")
+		customAgentConfig := cfg.Agents["custom-agent"]
 		require.Equal(t, "Custom Agent", customAgentConfig.Name)
 		require.Equal(t, SelectedModelTypeSmall, customAgentConfig.Model)
 		require.Equal(t, []string{"view", "grep"}, customAgentConfig.AllowedTools)
 
 		// Verify prompt was loaded
-		require.Contains(t, cfg.AgentPrompts, "custom")
-		require.Equal(t, "Custom prompt for testing", cfg.AgentPrompts["custom"])
+		require.Contains(t, cfg.AgentPrompts, "custom-agent")
+		require.Equal(t, "Custom prompt for testing", cfg.AgentPrompts["custom-agent"])
 	})
 
 	t.Run("applies disabled tools filter", func(t *testing.T) {
@@ -94,8 +93,7 @@ context_paths:
 		require.NoError(t, err)
 
 		// Create agent with tools
-		agent := `id: filtered
-name: Filtered Agent
+		agent := `name: Filtered Agent
 prompt: Test
 tools:
   allowed:
@@ -115,7 +113,7 @@ tools:
 		err = cfg.SetupAgents()
 		require.NoError(t, err)
 
-		filteredAgent := cfg.Agents["filtered"]
+		filteredAgent := cfg.Agents["filtered-agent"]
 		require.NotContains(t, filteredAgent.AllowedTools, "bash")
 		require.Contains(t, filteredAgent.AllowedTools, "edit")
 		require.Contains(t, filteredAgent.AllowedTools, "view")
@@ -142,8 +140,7 @@ tools:
 		require.NoError(t, err)
 
 		// Create agent without context paths
-		agent := `id: no-context
-name: No Context Agent
+		agent := `name: No Context Agent
 prompt: Test
 `
 		err = os.WriteFile(filepath.Join(agentsDir, "no-context.yaml"), []byte(agent), 0o644)
@@ -158,7 +155,7 @@ prompt: Test
 		err = cfg.SetupAgents()
 		require.NoError(t, err)
 
-		noContextAgent := cfg.Agents["no-context"]
+		noContextAgent := cfg.Agents["no-context-agent"]
 		require.Equal(t, []string{".cursorrules", "TULPA.md"}, noContextAgent.ContextPaths)
 	})
 
@@ -183,8 +180,7 @@ prompt: Test
 		require.NoError(t, err)
 
 		// Create agent with custom context paths
-		agent := `id: custom-context
-name: Custom Context Agent
+		agent := `name: Custom Context Agent
 prompt: Test
 context_paths:
   - custom1.md
@@ -202,7 +198,7 @@ context_paths:
 		err = cfg.SetupAgents()
 		require.NoError(t, err)
 
-		customContextAgent := cfg.Agents["custom-context"]
+		customContextAgent := cfg.Agents["custom-context-agent"]
 		require.Equal(t, []string{"custom1.md", "custom2.md"}, customContextAgent.ContextPaths)
 	})
 

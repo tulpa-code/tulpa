@@ -481,11 +481,7 @@ func resolveAllowedTools(allTools []string, disabledTools []string) []string {
 	return filterSlice(allTools, disabledTools, false)
 }
 
-func resolveReadOnlyTools(tools []string) []string {
-	readOnlyTools := []string{"glob", "grep", "ls", "sourcegraph", "view"}
-	// filter to only include tools that are in allowedtools (include mode)
-	return filterSlice(tools, readOnlyTools, true)
-}
+
 
 func filterSlice(data []string, mask []string, include bool) []string {
 	filtered := []string{}
@@ -520,7 +516,7 @@ func (c *Config) SetupAgents() error {
 		}
 
 		// Override context paths if not set in YAML
-		if len(agent.ContextPaths) == 0 {
+		if agent.ContextPaths == nil || len(agent.ContextPaths) == 0 {
 			agent.ContextPaths = c.Options.ContextPaths
 		}
 

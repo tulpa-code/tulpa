@@ -2,9 +2,6 @@
 # This file demonstrates all available configuration options
 # Copy this to ~/.config/tulpa/agents/ and customize for your needs
 
-# Required: Unique identifier for this agent
-id: example-agent
-
 # Required: Human-readable name
 name: Example Agent
 

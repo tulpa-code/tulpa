@@ -507,7 +507,7 @@ func TestConfig_setupAgentsWithEveryReadOnlyToolDisabled(t *testing.T) {
 		},
 	}
 
-	err = cfg.SetupAgents()
+	err := cfg.SetupAgents()
 	require.NoError(t, err)
 	coderAgent, ok := cfg.Agents["coder"]
 	require.True(t, ok)

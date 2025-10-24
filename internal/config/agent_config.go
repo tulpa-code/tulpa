@@ -4,73 +4,39 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
-// AgentYAMLConfig represents the YAML configuration for an agent.
-// This is the structure that users can customize to define their agents.
 type AgentYAMLConfig struct {
-	// Agent identification
-	ID          string `yaml:"id"`
 	Name        string `yaml:"name"`
 	Description string `yaml:"description"`
-
-	// The prompt content for this agent
-	Prompt string `yaml:"prompt"`
-
-	// Model configuration - either a type (large/small) or specific provider/model
-	Model AgentModelConfig `yaml:"model"`
-
-	// Tools configuration
-	Tools AgentToolsConfig `yaml:"tools,omitempty"`
-
-	// MCP configuration
-	MCP AgentMCPConfig `yaml:"mcp,omitempty"`
-
-	// LSP configuration
-	LSP AgentLSPConfig `yaml:"lsp,omitempty"`
-
-	// Context paths
+	Prompt      string `yaml:"prompt"`
+	Model       AgentModelConfig `yaml:"model"`
+	Tools       AgentToolsConfig `yaml:"tools,omitempty"`
+	MCP         AgentMCPConfig `yaml:"mcp,omitempty"`
+	LSP         AgentLSPConfig `yaml:"lsp,omitempty"`
 	ContextPaths []string `yaml:"context_paths,omitempty"`
-
-	// Whether this agent is disabled
-	Disabled bool `yaml:"disabled,omitempty"`
+	Disabled    bool `yaml:"disabled,omitempty"`
 }
 
-// AgentModelConfig configures which model the agent should use.
 type AgentModelConfig struct {
-	// Type can be "large" or "small" to use the configured model type
-	Type string `yaml:"type,omitempty"`
-
-	// Specific provider and model (overrides Type)
+	Type     string `yaml:"type,omitempty"`
 	Provider string `yaml:"provider,omitempty"`
 	Model    string `yaml:"model,omitempty"`
 }
 
-// AgentToolsConfig configures which tools are available to the agent.
 type AgentToolsConfig struct {
-	// Allowed is a list of tool names that are allowed (whitelist mode)
-	// If empty, all tools are allowed except those in Disabled
-	Allowed []string `yaml:"allowed,omitempty"`
-
-	// Disabled is a list of tool names that are disabled (blacklist mode)
-	// Only used if Allowed is empty
+	Allowed  []string `yaml:"allowed,omitempty"`
 	Disabled []string `yaml:"disabled,omitempty"`
 }
 
-// AgentMCPConfig configures which MCP servers and tools are available.
 type AgentMCPConfig struct {
-	// Allowed maps MCP server names to lists of allowed tool names
-	// If the list is nil or empty, all tools from that server are allowed
-	// If Allowed is nil (not set), all MCP servers and tools are available
 	Allowed map[string][]string `yaml:"allowed,omitempty"`
 }
 
-// AgentLSPConfig configures which LSP servers are available.
 type AgentLSPConfig struct {
-	// Allowed is a list of LSP server names that are allowed
-	// If nil or empty, all LSP servers are available
 	Allowed []string `yaml:"allowed,omitempty"`
 }
 
@@ -107,10 +73,13 @@ func SaveAgentConfig(path string, config *AgentYAMLConfig) error {
 	return nil
 }
 
-// ToAgent converts an AgentYAMLConfig to the internal Agent type.
+func (a *AgentYAMLConfig) GenerateID() string {
+	return strings.ToLower(strings.ReplaceAll(a.Name, " ", "-"))
+}
+
 func (a *AgentYAMLConfig) ToAgent() Agent {
 	agent := Agent{
-		ID:           a.ID,
+		ID:           a.GenerateID(),
 		Name:         a.Name,
 		Description:  a.Description,
 		Disabled:     a.Disabled,
@@ -142,7 +111,6 @@ func (a *AgentYAMLConfig) ToAgent() Agent {
 	return agent
 }
 
-// AgentsConfigDir returns the directory where agent configs are stored.
 func AgentsConfigDir() string {
 	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
 	if xdgConfigHome != "" {
@@ -157,16 +125,6 @@ func AgentsConfigDir() string {
 	return filepath.Join(homeDir, ".config", appName, "agents")
 }
 
-// LoadAgentsFromDirectory loads all agent configurations from the agents directory.
-// Returns:
-// - agents: map of agent ID to Agent config
-// - prompts: map of agent ID to custom prompt
-// - error: nil on success, error if YAML files exist but are invalid
-//
-// Behavior:
-// - If no YAML files exist: creates defaults and loads them
-// - If YAML files exist but are invalid: returns descriptive error (caller should exit)
-// - If directory cannot be accessed: returns error
 func LoadAgentsFromDirectory() (map[string]Agent, map[string]string, error) {
 	agentsDir := AgentsConfigDir()
 
@@ -224,13 +182,15 @@ func LoadAgentsFromDirectory() (map[string]Agent, map[string]string, error) {
 			continue
 		}
 
-		if config.ID == "" {
-			loadErrors = append(loadErrors, fmt.Sprintf("  - %s: missing required field 'id'", entry.Name()))
+		if config.Name == "" {
+			fmt.Printf("DEBUG: Config name is empty for %s\n", entry.Name())
+			loadErrors = append(loadErrors, fmt.Sprintf("  - %s: missing required field 'name'", entry.Name()))
 			continue
 		}
 
-		agents[config.ID] = config.ToAgent()
-		prompts[config.ID] = config.Prompt
+		agentID := config.GenerateID()
+		agents[agentID] = config.ToAgent()
+		prompts[agentID] = config.Prompt
 	}
 
 	// If we found YAML files but couldn't load any, return detailed error
@@ -250,7 +210,6 @@ func LoadAgentsFromDirectory() (map[string]Agent, map[string]string, error) {
 	return agents, prompts, nil
 }
 
-// formatErrorList formats a list of errors for display.
 func formatErrorList(errors []string) string {
 	result := "Errors found:\n"
 	for _, err := range errors {
@@ -259,11 +218,9 @@ func formatErrorList(errors []string) string {
 	return result
 }
 
-// createDefaultAgentConfigs creates default agent configuration files.
 func createDefaultAgentConfigs(agentsDir string) error {
 	defaults := []AgentYAMLConfig{
 		{
-			ID:          "coder",
 			Name:        "Coder",
 			Description: "An agent that helps with executing coding tasks.",
 			Prompt:      getDefaultCoderPrompt(),
@@ -276,7 +233,6 @@ func createDefaultAgentConfigs(agentsDir string) error {
 			ContextPaths: defaultContextPaths,
 		},
 		{
-			ID:          "task",
 			Name:        "Task",
 			Description: "An agent that helps with searching for context and finding implementation details.",
 			Prompt:      getDefaultTaskPrompt(),
@@ -287,17 +243,18 @@ func createDefaultAgentConfigs(agentsDir string) error {
 				Allowed: []string{"glob", "grep", "ls", "sourcegraph", "view"},
 			},
 			MCP: AgentMCPConfig{
-				Allowed: map[string][]string{}, // No MCPs by default
+				Allowed: map[string][]string{},
 			},
 			LSP: AgentLSPConfig{
-				Allowed: []string{}, // No LSPs by default
+				Allowed: []string{},
 			},
 			ContextPaths: defaultContextPaths,
 		},
 	}
 
 	for _, config := range defaults {
-		path := filepath.Join(agentsDir, fmt.Sprintf("%s.yaml", config.ID))
+		agentID := config.GenerateID()
+		path := filepath.Join(agentsDir, fmt.Sprintf("%s.yaml", agentID))
 		if err := SaveAgentConfig(path, &config); err != nil {
 			return err
 		}
@@ -306,7 +263,6 @@ func createDefaultAgentConfigs(agentsDir string) error {
 	return nil
 }
 
-// getDefaultCoderPrompt returns the default prompt for the coder agent.
 func getDefaultCoderPrompt() string {
 	return `You are Tulpa, an interactive CLI tool that helps users with software engineering tasks.
 
@@ -331,7 +287,6 @@ IMPORTANT: You should NOT answer with unnecessary preamble or postamble.
 IMPORTANT: Keep your responses short. You MUST answer concisely with fewer than 4 lines (not including tool use or code generation).`
 }
 
-// getDefaultTaskPrompt returns the default prompt for the task agent.
 func getDefaultTaskPrompt() string {
 	return `You are an agent for Tulpa. Given the user's prompt, you should use the tools available to you to answer the user's question.
 
