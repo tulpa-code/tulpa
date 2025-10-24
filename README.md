@@ -7,11 +7,6 @@ Tulpa is a Crush fork made for fun and experimentation towards a more flexible c
 Tulpa extends [Charmbracelet Crush](https://github.com/charmbracelet/crush)
 with multi-agent orchestration and project memory capabilities.
 
-**Original Project**: Crush by Charmbracelet
-**License**: FSL-1.1-MIT
-**Copyright**: 2025 Charmbracelet, Inc
-**Tulpa Additions**: Copyright 2025 Tulpa Contributors
-
 _Tulpa is an independent opensource software project and is not affiliated with Charmbracelet, Inc._
 
 ## Current Status
@@ -40,5 +35,10 @@ If you find this fork of Charm interesting and useful we'd love to have you join
 ## License
 
 [FSL-1.1-MIT](LICENSE.md)
+
+- **Original Project**: Crush by Charmbracelet
+- **License**: FSL-1.1-MIT
+- **Copyright**: 2025 Charmbracelet, Inc
+- **Tulpa Additions**: Copyright 2025 Tulpa Contributors
 
 ---
