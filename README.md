@@ -34,10 +34,8 @@ If you find this fork of Charm interesting and useful we'd love to have you join
 
 ## License
 
-[FSL-1.1-MIT](LICENSE.md)
-
 - **Original Project**: Crush by Charmbracelet
-- **License**: FSL-1.1-MIT
+- **License**: [FSL-1.1-MIT](LICENSE.md)
 - **Copyright**: 2025 Charmbracelet, Inc
 - **Tulpa Additions**: Copyright 2025 Tulpa Contributors
 
