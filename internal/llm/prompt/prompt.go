@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,6 +24,21 @@ const (
 )
 
 func GetPrompt(promptID PromptID, provider string, contextPaths ...string) string {
+	// Try to get custom prompt from config first
+	cfg := config.Get()
+	if cfg != nil && cfg.AgentPrompts != nil {
+		// Map PromptID to agent ID
+		agentID := string(promptID)
+		if customPrompt, ok := cfg.AgentPrompts[agentID]; ok && customPrompt != "" {
+			// For coder prompt, add environment info and context
+			if promptID == PromptCoder {
+				return formatCoderPrompt(customPrompt, contextPaths...)
+			}
+			return customPrompt
+		}
+	}
+
+	// Fall back to embedded defaults
 	basePrompt := ""
 	switch promptID {
 	case PromptCoder:
@@ -37,6 +53,18 @@ func GetPrompt(promptID PromptID, provider string, contextPaths ...string) strin
 		basePrompt = "You are a helpful assistant"
 	}
 	return basePrompt
+}
+
+// formatCoderPrompt adds environment info and context to a coder prompt.
+func formatCoderPrompt(basePrompt string, contextPaths ...string) string {
+	envInfo := getEnvironmentInfo()
+	formatted := fmt.Sprintf("%s\n\n%s\n%s", basePrompt, envInfo, lspInformation())
+
+	contextContent := getContextFromPaths(config.Get().WorkingDir(), contextPaths)
+	if contextContent != "" {
+		return fmt.Sprintf("%s\n\n# Project-Specific Context\n Make sure to follow the instructions in the context below\n%s", formatted, contextContent)
+	}
+	return formatted
 }
 
 func getContextFromPaths(workingDir string, contextPaths []string) string {

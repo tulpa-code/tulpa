@@ -296,6 +296,8 @@ type Config struct {
 	workingDir string `json:"-"`
 	// TODO: most likely remove this concept when I come back to it
 	Agents map[string]Agent `json:"-"`
+	// Agent prompts loaded from YAML configs
+	AgentPrompts map[string]string `json:"-"`
 	// TODO: find a better way to do this this should probably not be part of the config
 	resolver       VariableResolver
 	dataConfigDir  string             `json:"-"`
@@ -498,6 +500,40 @@ func filterSlice(data []string, mask []string, include bool) []string {
 }
 
 func (c *Config) SetupAgents() {
+	// Try to load agents from YAML configs
+	agents, prompts, err := LoadAgentsFromDirectory()
+	if err != nil {
+		// Fall back to hardcoded agents if YAML loading fails
+		slog.Warn("Failed to load agents from YAML, using hardcoded defaults", "error", err)
+		c.setupHardcodedAgents()
+		return
+	}
+
+	// Apply disabled tools filter and context paths to all agents
+	allTools := allToolNames()
+	for id, agent := range agents {
+		// Apply disabled tools filter if AllowedTools is set
+		if len(agent.AllowedTools) > 0 {
+			agent.AllowedTools = resolveAllowedTools(agent.AllowedTools, c.Options.DisabledTools)
+		} else {
+			// If no tools specified, use all tools minus disabled
+			agent.AllowedTools = resolveAllowedTools(allTools, c.Options.DisabledTools)
+		}
+
+		// Override context paths if not set in YAML
+		if len(agent.ContextPaths) == 0 {
+			agent.ContextPaths = c.Options.ContextPaths
+		}
+
+		agents[id] = agent
+	}
+
+	c.Agents = agents
+	c.AgentPrompts = prompts
+}
+
+// setupHardcodedAgents is a fallback for when YAML configs cannot be loaded.
+func (c *Config) setupHardcodedAgents() {
 	allowedTools := resolveAllowedTools(allToolNames(), c.Options.DisabledTools)
 
 	agents := map[string]Agent{
@@ -522,6 +558,7 @@ func (c *Config) SetupAgents() {
 		},
 	}
 	c.Agents = agents
+	c.AgentPrompts = make(map[string]string) // Empty prompts, will use embedded defaults
 }
 
 func (c *Config) Resolver() VariableResolver {
