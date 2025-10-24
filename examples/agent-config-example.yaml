@@ -1,0 +1,102 @@
+# Example Agent Configuration for Tulpa
+# This file demonstrates all available configuration options
+# Copy this to ~/.config/tulpa/agents/ and customize for your needs
+
+# Required: Human-readable name
+name: Example Agent
+
+# Required: Brief description of the agent's purpose
+description: An example agent demonstrating all configuration options
+
+# Required: The system prompt that defines the agent's behavior and personality
+# Use YAML multi-line string for better formatting
+prompt: |
+  You are an example agent for Tulpa, demonstrating configuration options.
+
+  Your responsibilities:
+  - Help users understand agent configuration
+  - Demonstrate best practices
+  - Show available features
+
+  Communication style:
+  - Be clear and concise
+  - Provide examples when helpful
+  - Follow project conventions
+
+# Model configuration
+model:
+  # Option 1: Use a configured model type (recommended)
+  type: large  # or "small"
+
+  # Option 2: Specify provider and model (not yet implemented)
+  # provider: openai
+  # model: gpt-4o
+
+# Tools configuration - controls which built-in tools this agent can use
+tools:
+  # Whitelist approach: explicitly list allowed tools
+  allowed:
+    - bash       # Execute shell commands
+    - edit       # Edit existing files
+    - multiedit  # Edit multiple files
+    - write      # Create new files
+    - view       # Read files
+    - grep       # Search file contents
+    - glob       # Find files by pattern
+    - ls         # List directory contents
+    - download   # Download from URLs
+    - fetch      # Fetch web content
+
+  # Alternative: Blacklist approach (uncomment to use)
+  # disabled:
+  #   - sourcegraph  # Disable specific tools
+
+# MCP (Model Context Protocol) server configuration
+# Controls which external tools from MCP servers are available
+mcp:
+  allowed:
+    # Syntax: server-name: [list of tool names]
+    # Empty list [] means all tools from that server
+
+    # Example: Allow specific tools from a server
+    my-mcp-server:
+      - database-query
+      - api-call
+
+    # Example: Allow all tools from a server
+    another-server: []
+
+  # Alternative: Allow all MCP servers and tools (uncomment to use)
+  # allowed: {}
+
+  # Alternative: No MCP servers (uncomment to use)
+  # allowed: {}
+
+# LSP (Language Server Protocol) configuration
+# Controls which language servers are available for diagnostics
+lsp:
+  # List of allowed LSP servers by name
+  allowed:
+    - gopls           # Go
+    - rust-analyzer   # Rust
+    - typescript-language-server  # TypeScript
+    - pyright         # Python
+
+  # Alternative: Allow all LSP servers (uncomment to use)
+  # allowed: []
+
+  # Alternative: No LSP servers (uncomment to use)
+  # allowed: []
+
+# Context paths - files to include in the agent's context
+# These files are automatically read and added to the system prompt
+context_paths:
+  - .cursorrules              # Cursor IDE rules
+  - .cursorrules.local        # Local overrides
+  - TULPA.md                  # Project-specific instructions
+  - tulpa.md                  # Alternative naming
+  - docs/coding-standards.md  # Style guides
+  - docs/architecture.md      # Architecture docs
+
+# Optional: Disable this agent
+disabled: false

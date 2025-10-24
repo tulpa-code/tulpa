@@ -6,33 +6,22 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"time"
 
-	"github.com/charmbracelet/catwalk/pkg/catwalk"
 	"github.com/tulpa-code/tulpa/internal/config"
 	"github.com/tulpa-code/tulpa/internal/llm/tools"
 )
 
-func CoderPrompt(p string, contextFiles ...string) string {
-	var basePrompt string
-
-	basePrompt = string(anthropicCoderPrompt)
-	switch p {
-	case string(catwalk.InferenceProviderOpenAI):
-		// seems to behave better
-		basePrompt = string(coderV2Prompt)
-	case string(catwalk.InferenceProviderGemini):
-		basePrompt = string(geminiCoderPrompt)
+func CoderPrompt(_ string, contextFiles ...string) string {
+	cfg := config.Get()
+	var cwd string
+	if cfg == nil {
+		cwd = "."
+	} else {
+		cwd = cfg.WorkingDir()
 	}
-	if ok, _ := strconv.ParseBool(os.Getenv("TULPA_CODER_V2")); ok {
-		basePrompt = string(coderV2Prompt)
-	}
-	envInfo := getEnvironmentInfo()
-
-	basePrompt = fmt.Sprintf("%s\n\n%s\n%s", basePrompt, envInfo, lspInformation())
-
-	contextContent := getContextFromPaths(config.Get().WorkingDir(), contextFiles)
+	basePrompt := string(defaultCoderPrompt)
+	contextContent := getContextFromPaths(cwd, contextFiles)
 	if contextContent != "" {
 		return fmt.Sprintf("%s\n\n# Project-Specific Context\n Make sure to follow the instructions in the context below\n%s", basePrompt, contextContent)
 	}
@@ -40,16 +29,14 @@ func CoderPrompt(p string, contextFiles ...string) string {
 }
 
 //go:embed anthropic.md
-var anthropicCoderPrompt []byte
-
-//go:embed gemini.md
-var geminiCoderPrompt []byte
-
-//go:embed v2.md
-var coderV2Prompt []byte
+var defaultCoderPrompt []byte
 
 func getEnvironmentInfo() string {
-	cwd := config.Get().WorkingDir()
+	cfg := config.Get()
+	if cfg == nil {
+		return "Environment information unavailable - no config loaded"
+	}
+	cwd := cfg.WorkingDir()
 	isGit := isGitRepo(cwd)
 	platform := runtime.GOOS
 	date := time.Now().Format("1/2/2006")
@@ -74,6 +61,9 @@ func isGitRepo(dir string) bool {
 
 func lspInformation() string {
 	cfg := config.Get()
+	if cfg == nil {
+		return ""
+	}
 	hasLSP := false
 	for _, v := range cfg.LSP {
 		if !v.Disabled {
