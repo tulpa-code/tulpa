@@ -9,10 +9,8 @@ import (
 )
 
 func TestSetupAgents(t *testing.T) {
-	t.Parallel()
 
 	t.Run("loads agents from YAML configs", func(t *testing.T) {
-		t.Parallel()
 
 		// Save original env and restore after test
 		originalXDG := os.Getenv("XDG_CONFIG_HOME")
@@ -25,8 +23,12 @@ func TestSetupAgents(t *testing.T) {
 		})
 
 		tmpDir := t.TempDir()
-		agentsDir := filepath.Join(tmpDir, "agents")
+		agentsDir := filepath.Join(tmpDir, "tulpa", "agents")
 		os.Setenv("XDG_CONFIG_HOME", tmpDir)
+		os.Setenv("TULPA_SKIP_DEFAULT_AGENTS", "1")
+		t.Cleanup(func() {
+			os.Unsetenv("TULPA_SKIP_DEFAULT_AGENTS")
+		})
 
 		err := os.MkdirAll(agentsDir, 0o755)
 		require.NoError(t, err)
@@ -73,7 +75,6 @@ context_paths:
 	})
 
 	t.Run("applies disabled tools filter", func(t *testing.T) {
-		t.Parallel()
 
 		// Save original env and restore after test
 		originalXDG := os.Getenv("XDG_CONFIG_HOME")
@@ -86,8 +87,12 @@ context_paths:
 		})
 
 		tmpDir := t.TempDir()
-		agentsDir := filepath.Join(tmpDir, "agents")
+		agentsDir := filepath.Join(tmpDir, "tulpa", "agents")
 		os.Setenv("XDG_CONFIG_HOME", tmpDir)
+		os.Setenv("TULPA_SKIP_DEFAULT_AGENTS", "1")
+		t.Cleanup(func() {
+			os.Unsetenv("TULPA_SKIP_DEFAULT_AGENTS")
+		})
 
 		err := os.MkdirAll(agentsDir, 0o755)
 		require.NoError(t, err)
@@ -120,7 +125,6 @@ tools:
 	})
 
 	t.Run("applies default context paths when not specified", func(t *testing.T) {
-		t.Parallel()
 
 		// Save original env and restore after test
 		originalXDG := os.Getenv("XDG_CONFIG_HOME")
@@ -133,8 +137,12 @@ tools:
 		})
 
 		tmpDir := t.TempDir()
-		agentsDir := filepath.Join(tmpDir, "agents")
+		agentsDir := filepath.Join(tmpDir, "tulpa", "agents")
 		os.Setenv("XDG_CONFIG_HOME", tmpDir)
+		os.Setenv("TULPA_SKIP_DEFAULT_AGENTS", "1")
+		t.Cleanup(func() {
+			os.Unsetenv("TULPA_SKIP_DEFAULT_AGENTS")
+		})
 
 		err := os.MkdirAll(agentsDir, 0o755)
 		require.NoError(t, err)
@@ -160,7 +168,6 @@ prompt: Test
 	})
 
 	t.Run("keeps custom context paths when specified", func(t *testing.T) {
-		t.Parallel()
 
 		// Save original env and restore after test
 		originalXDG := os.Getenv("XDG_CONFIG_HOME")
@@ -173,8 +180,12 @@ prompt: Test
 		})
 
 		tmpDir := t.TempDir()
-		agentsDir := filepath.Join(tmpDir, "agents")
+		agentsDir := filepath.Join(tmpDir, "tulpa", "agents")
 		os.Setenv("XDG_CONFIG_HOME", tmpDir)
+		os.Setenv("TULPA_SKIP_DEFAULT_AGENTS", "1")
+		t.Cleanup(func() {
+			os.Unsetenv("TULPA_SKIP_DEFAULT_AGENTS")
+		})
 
 		err := os.MkdirAll(agentsDir, 0o755)
 		require.NoError(t, err)
@@ -203,7 +214,6 @@ context_paths:
 	})
 
 	t.Run("returns error when YAML configs fail to load", func(t *testing.T) {
-		t.Parallel()
 
 		// Save original env and restore after test
 		originalXDG := os.Getenv("XDG_CONFIG_HOME")
@@ -216,8 +226,12 @@ context_paths:
 		})
 
 		tmpDir := t.TempDir()
-		agentsDir := filepath.Join(tmpDir, "agents")
+		agentsDir := filepath.Join(tmpDir, "tulpa", "agents")
 		os.Setenv("XDG_CONFIG_HOME", tmpDir)
+		os.Setenv("TULPA_SKIP_DEFAULT_AGENTS", "1")
+		t.Cleanup(func() {
+			os.Unsetenv("TULPA_SKIP_DEFAULT_AGENTS")
+		})
 
 		err := os.MkdirAll(agentsDir, 0o755)
 		require.NoError(t, err)
@@ -242,4 +256,3 @@ invalid: yaml: syntax: [[[
 		require.Contains(t, err.Error(), "agent configuration error")
 	})
 }
-

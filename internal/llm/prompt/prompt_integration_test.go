@@ -83,6 +83,20 @@ func TestGetPromptWithYAMLConfig(t *testing.T) {
 func TestFormatCoderPrompt(t *testing.T) {
 	t.Parallel()
 
+	// Initialize config for tests that depend on it
+	originalCfg := config.Get()
+	t.Cleanup(func() {
+		// Reset config after test
+		if originalCfg == nil {
+			// Can't easily unset global config, but this is better than nothing
+			_, _ = config.Init(".", ".", false)
+		}
+	})
+
+	// Create a minimal config for testing
+	_, err := config.Init(t.TempDir(), t.TempDir(), false)
+	require.NoError(t, err)
+
 	t.Run("adds environment info to custom prompt", func(t *testing.T) {
 		t.Parallel()
 

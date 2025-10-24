@@ -202,11 +202,8 @@ func TestAgentYAMLConfigToAgent(t *testing.T) {
 }
 
 func TestLoadAgentsFromDirectory(t *testing.T) {
-	t.Parallel()
 
 	t.Run("loads multiple agent configs", func(t *testing.T) {
-		t.Parallel()
-
 		// Save original env and restore after test
 		originalXDG := os.Getenv("XDG_CONFIG_HOME")
 		t.Cleanup(func() {
@@ -218,8 +215,12 @@ func TestLoadAgentsFromDirectory(t *testing.T) {
 		})
 
 		tmpDir := t.TempDir()
-		agentsDir := filepath.Join(tmpDir, "agents")
+		agentsDir := filepath.Join(tmpDir, "tulpa", "agents")
 		os.Setenv("XDG_CONFIG_HOME", tmpDir)
+		os.Setenv("TULPA_SKIP_DEFAULT_AGENTS", "1")
+		t.Cleanup(func() {
+			os.Unsetenv("TULPA_SKIP_DEFAULT_AGENTS")
+		})
 
 		err := os.MkdirAll(agentsDir, 0o755)
 		require.NoError(t, err)
@@ -256,8 +257,6 @@ model:
 	})
 
 	t.Run("skips non-YAML files", func(t *testing.T) {
-		t.Parallel()
-
 		// Save original env and restore after test
 		originalXDG := os.Getenv("XDG_CONFIG_HOME")
 		t.Cleanup(func() {
@@ -269,8 +268,12 @@ model:
 		})
 
 		tmpDir := t.TempDir()
-		agentsDir := filepath.Join(tmpDir, "agents")
+		agentsDir := filepath.Join(tmpDir, "tulpa", "agents")
 		os.Setenv("XDG_CONFIG_HOME", tmpDir)
+		os.Setenv("TULPA_SKIP_DEFAULT_AGENTS", "1")
+		t.Cleanup(func() {
+			os.Unsetenv("TULPA_SKIP_DEFAULT_AGENTS")
+		})
 
 		err := os.MkdirAll(agentsDir, 0o755)
 		require.NoError(t, err)
@@ -290,16 +293,16 @@ prompt: Valid
 		require.NoError(t, err)
 		require.Len(t, agents, 1)
 		require.Len(t, prompts, 1)
-		require.Contains(t, agents, "valid")
+		require.Contains(t, agents, "valid-agent")
 	})
 
-	// TODO: This test is flaky due to test isolation issues. 
+	// TODO: This test is flaky due to test isolation issues.
 	// The validation logic works correctly, but parallel tests
 	// may create default configs that interfere with this test.
-	// 
+	//
 	// t.Run("returns error for configs without ID", func(t *testing.T) {
 	// 	t.Parallel()
-	// 
+	//
 	// 	// Save original env and restore after test
 	// 	originalXDG := os.Getenv("XDG_CONFIG_HOME")
 	// 	t.Cleanup(func() {
@@ -309,20 +312,20 @@ prompt: Valid
 	// 			os.Unsetenv("XDG_CONFIG_HOME")
 	// 		}
 	// 	})
-	// 
+	//
 	// 	tmpDir := t.TempDir()
 	// 	agentsDir := filepath.Join(tmpDir, "agents")
 	// 	os.Setenv("XDG_CONFIG_HOME", tmpDir)
-	// 
+	//
 	// 	err := os.MkdirAll(agentsDir, 0o755)
 	// 	require.NoError(t, err)
-	// 
+	//
 	// 	// Create config without name
 	// 	agent := `prompt: Has no name
 	// `
 	// 	err = os.WriteFile(filepath.Join(agentsDir, "no-id.yaml"), []byte(agent), 0o644)
 	// 	require.NoError(t, err)
-	// 
+	//
 	// 	agents, prompts, err := LoadAgentsFromDirectory()
 	// 	require.Error(t, err)
 	// 	require.Contains(t, err.Error(), "missing required field 'name'")
@@ -331,8 +334,6 @@ prompt: Valid
 	// })
 
 	t.Run("returns error for invalid YAML syntax", func(t *testing.T) {
-		t.Parallel()
-
 		// Save original env and restore after test
 		originalXDG := os.Getenv("XDG_CONFIG_HOME")
 		t.Cleanup(func() {
@@ -344,8 +345,12 @@ prompt: Valid
 		})
 
 		tmpDir := t.TempDir()
-		agentsDir := filepath.Join(tmpDir, "agents")
+		agentsDir := filepath.Join(tmpDir, "tulpa", "agents")
 		os.Setenv("XDG_CONFIG_HOME", tmpDir)
+		os.Setenv("TULPA_SKIP_DEFAULT_AGENTS", "1")
+		t.Cleanup(func() {
+			os.Unsetenv("TULPA_SKIP_DEFAULT_AGENTS")
+		})
 
 		err := os.MkdirAll(agentsDir, 0o755)
 		require.NoError(t, err)
@@ -367,8 +372,6 @@ invalid yaml syntax: [[[
 	})
 
 	t.Run("returns error when some configs fail to load", func(t *testing.T) {
-		t.Parallel()
-
 		// Save original env and restore after test
 		originalXDG := os.Getenv("XDG_CONFIG_HOME")
 		t.Cleanup(func() {
@@ -380,8 +383,12 @@ invalid yaml syntax: [[[
 		})
 
 		tmpDir := t.TempDir()
-		agentsDir := filepath.Join(tmpDir, "agents")
+		agentsDir := filepath.Join(tmpDir, "tulpa", "agents")
 		os.Setenv("XDG_CONFIG_HOME", tmpDir)
+		os.Setenv("TULPA_SKIP_DEFAULT_AGENTS", "1")
+		t.Cleanup(func() {
+			os.Unsetenv("TULPA_SKIP_DEFAULT_AGENTS")
+		})
 
 		err := os.MkdirAll(agentsDir, 0o755)
 		require.NoError(t, err)
