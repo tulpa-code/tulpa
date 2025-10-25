@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 
 	"github.com/tulpa-code/tulpa/internal/db"
 	"github.com/tulpa-code/tulpa/internal/event"
@@ -21,6 +22,8 @@ type Session struct {
 	Cost             float64
 	CreatedAt        int64
 	UpdatedAt        int64
+	ActiveAgentID    string   // Currently active primary agent
+	AgentHistory     []string // Ordered list of agent IDs used (for Tab cycling)
 }
 
 type Service interface {
@@ -32,6 +35,7 @@ type Service interface {
 	List(ctx context.Context) ([]Session, error)
 	Save(ctx context.Context, session Session) (Session, error)
 	Delete(ctx context.Context, id string) error
+	UpdateAgent(ctx context.Context, sessionID, activeAgentID, agentHistory string) (Session, error)
 }
 
 type service struct {
@@ -135,7 +139,29 @@ func (s *service) List(ctx context.Context) ([]Session, error) {
 	return sessions, nil
 }
 
+func (s *service) UpdateAgent(ctx context.Context, sessionID, activeAgentID, agentHistory string) (Session, error) {
+	dbSession, err := s.q.UpdateSessionAgent(ctx, db.UpdateSessionAgentParams{
+		ID:            sessionID,
+		ActiveAgentID: activeAgentID,
+		AgentHistory:  agentHistory,
+	})
+	if err != nil {
+		return Session{}, err
+	}
+	session := s.fromDBItem(dbSession)
+	s.Publish(pubsub.UpdatedEvent, session)
+	return session, nil
+}
+
 func (s service) fromDBItem(item db.Session) Session {
+	// Parse agent history from JSON string
+	var agentHistory []string
+	if item.AgentHistory != "" && item.AgentHistory != "[]" {
+		if err := json.Unmarshal([]byte(item.AgentHistory), &agentHistory); err != nil {
+			agentHistory = []string{}
+		}
+	}
+
 	return Session{
 		ID:               item.ID,
 		ParentSessionID:  item.ParentSessionID.String,
@@ -147,6 +173,8 @@ func (s service) fromDBItem(item db.Session) Session {
 		Cost:             item.Cost,
 		CreatedAt:        item.CreatedAt,
 		UpdatedAt:        item.UpdatedAt,
+		ActiveAgentID:    item.ActiveAgentID,
+		AgentHistory:     agentHistory,
 	}
 }
 

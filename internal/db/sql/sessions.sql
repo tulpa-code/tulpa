@@ -8,6 +8,8 @@ INSERT INTO sessions (
     completion_tokens,
     cost,
     summary_message_id,
+    active_agent_id,
+    agent_history,
     updated_at,
     created_at
 ) VALUES (
@@ -19,6 +21,8 @@ INSERT INTO sessions (
     ?,
     ?,
     null,
+    'coder',
+    '[]',
     strftime('%s', 'now'),
     strftime('%s', 'now')
 ) RETURNING *;
@@ -49,3 +53,17 @@ RETURNING *;
 -- name: DeleteSession :exec
 DELETE FROM sessions
 WHERE id = ?;
+
+-- name: UpdateSessionAgent :one
+UPDATE sessions
+SET
+    active_agent_id = ?,
+    agent_history = ?,
+    updated_at = strftime('%s', 'now')
+WHERE id = ?
+RETURNING *;
+
+-- name: GetSessionAgent :one
+SELECT active_agent_id, agent_history
+FROM sessions
+WHERE id = ? LIMIT 1;

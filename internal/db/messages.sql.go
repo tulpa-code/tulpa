@@ -18,12 +18,13 @@ INSERT INTO messages (
     parts,
     model,
     provider,
+    agent_id,
     created_at,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, strftime('%s', 'now'), strftime('%s', 'now')
+    ?, ?, ?, ?, ?, ?, ?, strftime('%s', 'now'), strftime('%s', 'now')
 )
-RETURNING id, session_id, role, parts, model, created_at, updated_at, finished_at, provider
+RETURNING id, session_id, role, parts, model, created_at, updated_at, finished_at, provider, agent_id
 `
 
 type CreateMessageParams struct {
@@ -33,6 +34,7 @@ type CreateMessageParams struct {
 	Parts     string         `json:"parts"`
 	Model     sql.NullString `json:"model"`
 	Provider  sql.NullString `json:"provider"`
+	AgentID   sql.NullString `json:"agent_id"`
 }
 
 func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error) {
@@ -43,6 +45,7 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 		arg.Parts,
 		arg.Model,
 		arg.Provider,
+		arg.AgentID,
 	)
 	var i Message
 	err := row.Scan(
@@ -55,6 +58,7 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 		&i.UpdatedAt,
 		&i.FinishedAt,
 		&i.Provider,
+		&i.AgentID,
 	)
 	return i, err
 }
@@ -80,7 +84,7 @@ func (q *Queries) DeleteSessionMessages(ctx context.Context, sessionID string) e
 }
 
 const getMessage = `-- name: GetMessage :one
-SELECT id, session_id, role, parts, model, created_at, updated_at, finished_at, provider
+SELECT id, session_id, role, parts, model, created_at, updated_at, finished_at, provider, agent_id
 FROM messages
 WHERE id = ? LIMIT 1
 `
@@ -98,12 +102,13 @@ func (q *Queries) GetMessage(ctx context.Context, id string) (Message, error) {
 		&i.UpdatedAt,
 		&i.FinishedAt,
 		&i.Provider,
+		&i.AgentID,
 	)
 	return i, err
 }
 
 const listMessagesBySession = `-- name: ListMessagesBySession :many
-SELECT id, session_id, role, parts, model, created_at, updated_at, finished_at, provider
+SELECT id, session_id, role, parts, model, created_at, updated_at, finished_at, provider, agent_id
 FROM messages
 WHERE session_id = ?
 ORDER BY created_at ASC
@@ -128,6 +133,7 @@ func (q *Queries) ListMessagesBySession(ctx context.Context, sessionID string) (
 			&i.UpdatedAt,
 			&i.FinishedAt,
 			&i.Provider,
+			&i.AgentID,
 		); err != nil {
 			return nil, err
 		}

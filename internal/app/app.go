@@ -83,6 +83,81 @@ func New(ctx context.Context, conn *sql.DB, cfg *config.Config) (*App, error) {
 	// cleanup database upon app shutdown
 	app.cleanupFuncs = append(app.cleanupFuncs, conn.Close)
 
+	// GetAgentManager returns agent manager for a session
+func (a *App) GetAgentManager(sessionID string) (*multiagent.Manager, error) {
+	manager, exists := a.AgentManagers.Get(sessionID)
+	if exists {
+		return manager, nil
+	}
+
+	// Create new manager for this session
+	manager, err := multiagent.NewManager(
+		context.Background(),
+		sessionID,
+		a.config.Agents,
+		a.Sessions,
+		a.Messages,
+		a.Permissions,
+		func(ctx context.Context, cfg config.Agent) (agent.Service, error) {
+			return agent.New(ctx, cfg, a.Permissions, a.Sessions, a.Messages, a.config, a.createAgent)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create agent manager: %w", err)
+	}
+
+	// Store manager
+	a.AgentManagers.Set(sessionID, manager)
+	return manager, nil
+}
+
+func (a *App) SwitchAgent(sessionID, agentID string) error {
+	manager, err := a.GetAgentManager(sessionID)
+	if err != nil {
+		return err
+	}
+	return manager.SwitchAgent(agentID)
+}
+
+func (a *App) RunAgent(ctx context.Context, sessionID string, content string, attachments ...message.Attachment) (<-chan agent.AgentEvent, error) {
+	manager, err := a.GetAgentManager(sessionID)
+	if err != nil {
+		return nil, err
+	}
+	return manager.Run(ctx, content, attachments...)
+}
+
+func (a *App) ActiveAgentID(sessionID string) (string, error) {
+	manager, err := a.GetAgentManager(sessionID)
+	if err != nil {
+		return "", err
+	}
+	return manager.ActiveAgentID(), nil
+}
+
+func (a *App) CancelAgent(sessionID string) {
+	manager, exists := a.AgentManagers.Get(sessionID)
+	if exists {
+		manager.Cancel(sessionID)
+	}
+}
+
+func (a *App) CycleNextAgent(sessionID string) error {
+	manager, err := a.GetAgentManager(sessionID)
+	if err != nil {
+		return err
+	}
+	return manager.CycleNext()
+}
+
+func (a *App) CyclePreviousAgent(sessionID string) error {
+	manager, err := a.GetAgentManager(sessionID)
+	if err != nil {
+		return err
+	}
+	return manager.CyclePrevious()
+}
+
 	// TODO: remove the concept of agent config, most likely.
 	if cfg.IsConfigured() {
 		if err := app.InitCoderAgent(); err != nil {

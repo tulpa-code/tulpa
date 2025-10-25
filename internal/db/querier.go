@@ -20,6 +20,7 @@ type Querier interface {
 	GetFile(ctx context.Context, id string) (File, error)
 	GetFileByPathAndSession(ctx context.Context, arg GetFileByPathAndSessionParams) (File, error)
 	GetMessage(ctx context.Context, id string) (Message, error)
+	GetSessionAgent(ctx context.Context, id string) (GetSessionAgentRow, error)
 	GetSessionByID(ctx context.Context, id string) (Session, error)
 	ListFilesByPath(ctx context.Context, path string) ([]File, error)
 	ListFilesBySession(ctx context.Context, sessionID string) ([]File, error)
@@ -29,6 +30,7 @@ type Querier interface {
 	ListSessions(ctx context.Context) ([]Session, error)
 	UpdateMessage(ctx context.Context, arg UpdateMessageParams) error
 	UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error)
+	UpdateSessionAgent(ctx context.Context, arg UpdateSessionAgentParams) (Session, error)
 }
 
 var _ Querier = (*Queries)(nil)

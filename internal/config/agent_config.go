@@ -17,6 +17,7 @@ type AgentYAMLConfig struct {
 	Tools        AgentToolsConfig `yaml:"tools,omitempty"`
 	MCP          AgentMCPConfig   `yaml:"mcp,omitempty"`
 	LSP          AgentLSPConfig   `yaml:"lsp,omitempty"`
+	Subagents    AgentSubagentsConfig `yaml:"subagents,omitempty"`
 	ContextPaths []string         `yaml:"context_paths,omitempty"`
 	Disabled     bool             `yaml:"disabled,omitempty"`
 }
@@ -38,6 +39,11 @@ type AgentMCPConfig struct {
 
 type AgentLSPConfig struct {
 	Allowed []string `yaml:"allowed,omitempty"`
+}
+
+type AgentSubagentsConfig struct {
+	Allowed []string `yaml:"allowed,omitempty"`
+	Default string   `yaml:"default,omitempty"`
 }
 
 // LoadAgentConfig loads an agent configuration from a YAML file.
@@ -107,6 +113,12 @@ func (a *AgentYAMLConfig) ToAgent() Agent {
 	if a.LSP.Allowed != nil {
 		agent.AllowedLSP = a.LSP.Allowed
 	}
+
+	// Set subagents configuration
+	if a.Subagents.Allowed != nil {
+		agent.AllowedSubagents = a.Subagents.Allowed
+	}
+	agent.DefaultSubagent = a.Subagents.Default
 
 	return agent
 }

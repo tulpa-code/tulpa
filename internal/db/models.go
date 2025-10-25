@@ -28,6 +28,7 @@ type Message struct {
 	UpdatedAt  int64          `json:"updated_at"`
 	FinishedAt sql.NullInt64  `json:"finished_at"`
 	Provider   sql.NullString `json:"provider"`
+	AgentID    sql.NullString `json:"agent_id"`
 }
 
 type Session struct {
@@ -41,4 +42,6 @@ type Session struct {
 	UpdatedAt        int64          `json:"updated_at"`
 	CreatedAt        int64          `json:"created_at"`
 	SummaryMessageID sql.NullString `json:"summary_message_id"`
+	ActiveAgentID    string         `json:"active_agent_id"`
+	AgentHistory     string         `json:"agent_history"`
 }

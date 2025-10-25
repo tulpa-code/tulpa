@@ -20,6 +20,8 @@ INSERT INTO sessions (
     completion_tokens,
     cost,
     summary_message_id,
+    active_agent_id,
+    agent_history,
     updated_at,
     created_at
 ) VALUES (
@@ -31,9 +33,11 @@ INSERT INTO sessions (
     ?,
     ?,
     null,
+    'coder',
+    '[]',
     strftime('%s', 'now'),
     strftime('%s', 'now')
-) RETURNING id, parent_session_id, title, message_count, prompt_tokens, completion_tokens, cost, updated_at, created_at, summary_message_id
+) RETURNING id, parent_session_id, title, message_count, prompt_tokens, completion_tokens, cost, updated_at, created_at, summary_message_id, active_agent_id, agent_history
 `
 
 type CreateSessionParams struct {
@@ -68,6 +72,8 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.SummaryMessageID,
+		&i.ActiveAgentID,
+		&i.AgentHistory,
 	)
 	return i, err
 }
@@ -83,7 +89,7 @@ func (q *Queries) DeleteSession(ctx context.Context, id string) error {
 }
 
 const getSessionByID = `-- name: GetSessionByID :one
-SELECT id, parent_session_id, title, message_count, prompt_tokens, completion_tokens, cost, updated_at, created_at, summary_message_id
+SELECT id, parent_session_id, title, message_count, prompt_tokens, completion_tokens, cost, updated_at, created_at, summary_message_id, active_agent_id, agent_history
 FROM sessions
 WHERE id = ? LIMIT 1
 `
@@ -102,12 +108,14 @@ func (q *Queries) GetSessionByID(ctx context.Context, id string) (Session, error
 		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.SummaryMessageID,
+		&i.ActiveAgentID,
+		&i.AgentHistory,
 	)
 	return i, err
 }
 
 const listSessions = `-- name: ListSessions :many
-SELECT id, parent_session_id, title, message_count, prompt_tokens, completion_tokens, cost, updated_at, created_at, summary_message_id
+SELECT id, parent_session_id, title, message_count, prompt_tokens, completion_tokens, cost, updated_at, created_at, summary_message_id, active_agent_id, agent_history
 FROM sessions
 WHERE parent_session_id is NULL
 ORDER BY created_at DESC
@@ -133,6 +141,8 @@ func (q *Queries) ListSessions(ctx context.Context) ([]Session, error) {
 			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.SummaryMessageID,
+			&i.ActiveAgentID,
+			&i.AgentHistory,
 		); err != nil {
 			return nil, err
 		}
@@ -156,7 +166,7 @@ SET
     summary_message_id = ?,
     cost = ?
 WHERE id = ?
-RETURNING id, parent_session_id, title, message_count, prompt_tokens, completion_tokens, cost, updated_at, created_at, summary_message_id
+RETURNING id, parent_session_id, title, message_count, prompt_tokens, completion_tokens, cost, updated_at, created_at, summary_message_id, active_agent_id, agent_history
 `
 
 type UpdateSessionParams struct {
@@ -189,6 +199,66 @@ func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) (S
 		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.SummaryMessageID,
+		&i.ActiveAgentID,
+		&i.AgentHistory,
 	)
+	return i, err
+}
+
+const updateSessionAgent = `-- name: UpdateSessionAgent :one
+UPDATE sessions
+SET
+    active_agent_id = ?,
+    agent_history = ?,
+    updated_at = strftime('%s', 'now')
+WHERE id = ?
+RETURNING id, parent_session_id, title, message_count, prompt_tokens, completion_tokens, cost, updated_at, created_at, summary_message_id, active_agent_id, agent_history
+`
+
+type UpdateSessionAgentParams struct {
+	ActiveAgentID string `json:"active_agent_id"`
+	AgentHistory  string `json:"agent_history"`
+	ID            string `json:"id"`
+}
+
+func (q *Queries) UpdateSessionAgent(ctx context.Context, arg UpdateSessionAgentParams) (Session, error) {
+	row := q.queryRow(ctx, q.updateSessionAgentStmt, updateSessionAgent,
+		arg.ActiveAgentID,
+		arg.AgentHistory,
+		arg.ID,
+	)
+	var i Session
+	err := row.Scan(
+		&i.ID,
+		&i.ParentSessionID,
+		&i.Title,
+		&i.MessageCount,
+		&i.PromptTokens,
+		&i.CompletionTokens,
+		&i.Cost,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+		&i.SummaryMessageID,
+		&i.ActiveAgentID,
+		&i.AgentHistory,
+	)
+	return i, err
+}
+
+const getSessionAgent = `-- name: GetSessionAgent :one
+SELECT active_agent_id, agent_history
+FROM sessions
+WHERE id = ? LIMIT 1
+`
+
+type GetSessionAgentRow struct {
+	ActiveAgentID string `json:"active_agent_id"`
+	AgentHistory  string `json:"agent_history"`
+}
+
+func (q *Queries) GetSessionAgent(ctx context.Context, id string) (GetSessionAgentRow, error) {
+	row := q.queryRow(ctx, q.getSessionAgentStmt, getSessionAgent, id)
+	var i GetSessionAgentRow
+	err := row.Scan(&i.ActiveAgentID, &i.AgentHistory)
 	return i, err
 }

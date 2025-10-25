@@ -165,6 +165,8 @@ prompt: Test
 
 		noContextAgent := cfg.Agents["no-context-agent"]
 		require.Equal(t, []string{".cursorrules", "TULPA.md"}, noContextAgent.ContextPaths)
+		require.Equal(t, []string{"task"}, noContextAgent.AllowedSubagents)
+		require.Equal(t, "task", noContextAgent.DefaultSubagent)
 	})
 
 	t.Run("keeps custom context paths when specified", func(t *testing.T) {

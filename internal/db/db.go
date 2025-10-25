@@ -84,6 +84,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.updateSessionStmt, err = db.PrepareContext(ctx, updateSession); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateSession: %w", err)
 	}
+	if q.updateSessionAgentStmt, err = db.PrepareContext(ctx, updateSessionAgent); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateSessionAgent: %w", err)
+	}
+	if q.getSessionAgentStmt, err = db.PrepareContext(ctx, getSessionAgent); err != nil {
+		return nil, fmt.Errorf("error preparing query GetSessionAgent: %w", err)
+	}
 	return &q, nil
 }
 
@@ -189,6 +195,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing updateSessionStmt: %w", cerr)
 		}
 	}
+	if q.updateSessionAgentStmt != nil {
+		if cerr := q.updateSessionAgentStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateSessionAgentStmt: %w", cerr)
+		}
+	}
+	if q.getSessionAgentStmt != nil {
+		if cerr := q.getSessionAgentStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getSessionAgentStmt: %w", cerr)
+		}
+	}
 	return err
 }
 
@@ -240,6 +256,7 @@ type Queries struct {
 	getFileByPathAndSessionStmt *sql.Stmt
 	getMessageStmt              *sql.Stmt
 	getSessionByIDStmt          *sql.Stmt
+	getSessionAgentStmt         *sql.Stmt
 	listFilesByPathStmt         *sql.Stmt
 	listFilesBySessionStmt      *sql.Stmt
 	listLatestSessionFilesStmt  *sql.Stmt
@@ -248,6 +265,7 @@ type Queries struct {
 	listSessionsStmt            *sql.Stmt
 	updateMessageStmt           *sql.Stmt
 	updateSessionStmt           *sql.Stmt
+	updateSessionAgentStmt      *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
@@ -266,6 +284,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getFileByPathAndSessionStmt: q.getFileByPathAndSessionStmt,
 		getMessageStmt:              q.getMessageStmt,
 		getSessionByIDStmt:          q.getSessionByIDStmt,
+		getSessionAgentStmt:         q.getSessionAgentStmt,
 		listFilesByPathStmt:         q.listFilesByPathStmt,
 		listFilesBySessionStmt:      q.listFilesBySessionStmt,
 		listLatestSessionFilesStmt:  q.listLatestSessionFilesStmt,
@@ -274,5 +293,6 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		listSessionsStmt:            q.listSessionsStmt,
 		updateMessageStmt:           q.updateMessageStmt,
 		updateSessionStmt:           q.updateSessionStmt,
+		updateSessionAgentStmt:      q.updateSessionAgentStmt,
 	}
 }

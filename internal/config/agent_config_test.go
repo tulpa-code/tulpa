@@ -175,6 +175,8 @@ func TestAgentYAMLConfigToAgent(t *testing.T) {
 		require.Equal(t, []string{"tool1"}, agent.AllowedMCP["server1"])
 		require.Equal(t, []string{"rust-analyzer"}, agent.AllowedLSP)
 		require.Equal(t, []string{".cursorrules"}, agent.ContextPaths)
+		require.Equal(t, []string{"task"}, agent.AllowedSubagents)
+		require.Equal(t, "task", agent.DefaultSubagent)
 		require.True(t, agent.Disabled)
 	})
 
