@@ -103,13 +103,8 @@ func (m *messageListCmp) Init() tea.Cmd {
 // Update handles incoming messages and updates the component state.
 func (m *messageListCmp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
-	if m.session.ID != "" && m.app.CoderAgent != nil {
-		queueSize := m.app.CoderAgent.QueuedPrompts(m.session.ID)
-		if queueSize != m.promptQueue {
-			m.promptQueue = queueSize
-			cmds = append(cmds, m.SetSize(m.width, m.height))
-		}
-	}
+	// TODO: Implement queued prompts in multi-agent manager if needed
+	// For now, we don't track queue size in multi-agent mode
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		if m.listCmp.IsFocused() && m.listCmp.HasSelection() {
@@ -235,10 +230,11 @@ func (m *messageListCmp) View() string {
 				m.listCmp.View(),
 			),
 	}
-	if m.app.CoderAgent != nil && m.promptQueue > 0 {
-		queuePill := queuePill(m.promptQueue, t)
-		view = append(view, t.S().Base.PaddingLeft(4).PaddingTop(1).Render(queuePill))
-	}
+	// TODO: Implement queued prompts visualization in multi-agent mode
+	// if m.promptQueue > 0 {
+	// 	queuePill := queuePill(m.promptQueue, t)
+	// 	view = append(view, t.S().Base.PaddingLeft(4).PaddingTop(1).Render(queuePill))
+	// }
 	return strings.Join(view, "\n")
 }
 

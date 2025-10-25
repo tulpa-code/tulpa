@@ -211,8 +211,10 @@ func (m *editorCmp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case commands.OpenExternalEditorMsg:
-		if m.app.CoderAgent != nil && m.app.CoderAgent.IsSessionBusy(m.session.ID) {
-			return m, util.ReportWarn("Agent is working, please wait...")
+		if m.session.ID != "" {
+			if manager, err := m.app.GetAgentManager(m.session.ID); err == nil && manager.IsSessionBusy(m.session.ID) {
+				return m, util.ReportWarn("Agent is working, please wait...")
+			}
 		}
 		return m, m.openEditor(m.textarea.Value())
 	case OpenEditorMsg:
@@ -297,8 +299,10 @@ func (m *editorCmp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 		if key.Matches(msg, m.keyMap.OpenEditor) {
-			if m.app.CoderAgent != nil && m.app.CoderAgent.IsSessionBusy(m.session.ID) {
-				return m, util.ReportWarn("Agent is working, please wait...")
+			if m.session.ID != "" {
+				if manager, err := m.app.GetAgentManager(m.session.ID); err == nil && manager.IsSessionBusy(m.session.ID) {
+					return m, util.ReportWarn("Agent is working, please wait...")
+				}
 			}
 			return m, m.openEditor(m.textarea.Value())
 		}
@@ -414,8 +418,14 @@ func (m *editorCmp) randomizePlaceholders() {
 
 func (m *editorCmp) View() string {
 	t := styles.CurrentTheme()
-	// Update placeholder
-	if m.app.CoderAgent != nil && m.app.CoderAgent.IsBusy() {
+	// Update placeholder based on agent manager status
+	isBusy := false
+	if m.session.ID != "" {
+		if manager, err := m.app.GetAgentManager(m.session.ID); err == nil {
+			isBusy = manager.IsBusy()
+		}
+	}
+	if isBusy {
 		m.textarea.Placeholder = m.workingPlaceholder
 	} else {
 		m.textarea.Placeholder = m.readyPlaceholder

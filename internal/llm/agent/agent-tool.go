@@ -56,9 +56,9 @@ func (b *agentTool) Run(ctx context.Context, call tools.ToolCall) (tools.ToolRes
 		return tools.ToolResponse{}, fmt.Errorf("session_id and message_id are required")
 	}
 
-	session, err := b.sessions.CreateTaskSession(ctx, call.ID, sessionID, "New Agent Session")
+	session, err := b.sessions.CreateSubAgentSession(ctx, call.ID, sessionID, "New SubAgent Session")
 	if err != nil {
-		return tools.ToolResponse{}, fmt.Errorf("error creating session: %s", err)
+		return tools.ToolResponse{}, fmt.Errorf("error creating subagent session: %s", err)
 	}
 
 	done, err := b.agent.Run(ctx, session.ID, params.Prompt)

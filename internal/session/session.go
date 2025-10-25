@@ -30,7 +30,7 @@ type Service interface {
 	pubsub.Suscriber[Session]
 	Create(ctx context.Context, title string) (Session, error)
 	CreateTitleSession(ctx context.Context, parentSessionID string) (Session, error)
-	CreateTaskSession(ctx context.Context, toolCallID, parentSessionID, title string) (Session, error)
+	CreateSubAgentSession(ctx context.Context, toolCallID, parentSessionID, title string) (Session, error)
 	Get(ctx context.Context, id string) (Session, error)
 	List(ctx context.Context) ([]Session, error)
 	Save(ctx context.Context, session Session) (Session, error)
@@ -57,7 +57,7 @@ func (s *service) Create(ctx context.Context, title string) (Session, error) {
 	return session, nil
 }
 
-func (s *service) CreateTaskSession(ctx context.Context, toolCallID, parentSessionID, title string) (Session, error) {
+func (s *service) CreateSubAgentSession(ctx context.Context, toolCallID, parentSessionID, title string) (Session, error) {
 	dbSession, err := s.q.CreateSession(ctx, db.CreateSessionParams{
 		ID:              toolCallID,
 		ParentSessionID: sql.NullString{String: parentSessionID, Valid: true},

@@ -141,11 +141,8 @@ func New(app *app.App) ChatPage {
 }
 
 func (p *chatPage) Init() tea.Cmd {
-	// TODO: Fix multi-agent initialization crash
-	// Temporarily skip agent initialization to debug TUI crash
-	// if err := p.app.InitCoderAgent(); err != nil {
-	// 	return util.ReportError(err)
-	// }
+	// Note: Agent managers are created lazily when sessions are created and agents are run
+	// No upfront initialization needed in multi-agent mode
 
 	cfg := config.Get()
 	compact := cfg.Options.TUI.CompactMode
@@ -356,8 +353,10 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return p, tea.Batch(cmds...)
 
 	case commands.CommandRunCustomMsg:
-		if p.app.CoderAgent != nil && p.app.CoderAgent.IsBusy() {
-			return p, util.ReportWarn("Agent is busy, please wait before executing a command...")
+		if p.session.ID != "" {
+			if manager, err := p.app.GetAgentManager(p.session.ID); err == nil && manager.IsBusy() {
+				return p, util.ReportWarn("Agent is busy, please wait before executing a command...")
+			}
 		}
 
 		cmd := p.sendMessage(msg.Content, nil)
@@ -376,19 +375,20 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		p.focusedPane = PanelTypeEditor
 		return p, p.SetSize(p.width, p.height)
 	case commands.NewSessionsMsg:
-		if p.app.CoderAgent != nil && p.app.CoderAgent.IsBusy() {
-			return p, util.ReportWarn("Agent is busy, please wait before starting a new session...")
+		if p.session.ID != "" {
+			if manager, err := p.app.GetAgentManager(p.session.ID); err == nil && manager.IsBusy() {
+				return p, util.ReportWarn("Agent is busy, please wait before starting a new session...")
+			}
 		}
 		return p, p.newSession()
 	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, p.keyMap.NewSession):
-			// if we have no agent do nothing
-			if p.app.CoderAgent == nil {
-				return p, nil
-			}
-			if p.app.CoderAgent != nil && p.app.CoderAgent.IsBusy() {
-				return p, util.ReportWarn("Agent is busy, please wait before starting a new session...")
+			// Check if any agent is busy
+			if p.session.ID != "" {
+				if manager, err := p.app.GetAgentManager(p.session.ID); err == nil && manager.IsBusy() {
+					return p, util.ReportWarn("Agent is busy, please wait before starting a new session...")
+				}
 			}
 			return p, p.newSession()
 		case key.Matches(msg, p.keyMap.AddAttachment):
@@ -408,12 +408,28 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			p.changeFocus()
 			return p, nil
 		case key.Matches(msg, p.keyMap.Cancel):
-			if p.session.ID != "" && p.app.CoderAgent.IsBusy() {
-				return p, p.cancel()
+			if p.session.ID != "" {
+				if manager, err := p.app.GetAgentManager(p.session.ID); err == nil && manager.IsSessionBusy(p.session.ID) {
+					return p, p.cancel()
+				}
 			}
 		case key.Matches(msg, p.keyMap.Details):
 			p.toggleDetails()
 			return p, nil
+		case key.Matches(msg, p.keyMap.NextAgent):
+			return p, p.cycleNextAgent()
+		case key.Matches(msg, p.keyMap.PreviousAgent):
+			return p, p.cyclePreviousAgent()
+		case key.Matches(msg, p.keyMap.Agent1):
+			return p, p.switchToAgentByIndex(0)
+		case key.Matches(msg, p.keyMap.Agent2):
+			return p, p.switchToAgentByIndex(1)
+		case key.Matches(msg, p.keyMap.Agent3):
+			return p, p.switchToAgentByIndex(2)
+		case key.Matches(msg, p.keyMap.Agent4):
+			return p, p.switchToAgentByIndex(3)
+		case key.Matches(msg, p.keyMap.Agent5):
+			return p, p.switchToAgentByIndex(4)
 		}
 
 		switch p.focusedPane {
@@ -727,16 +743,13 @@ func (p *chatPage) changeFocus() {
 func (p *chatPage) cancel() tea.Cmd {
 	if p.isCanceling {
 		p.isCanceling = false
-		if p.app.CoderAgent != nil {
-			p.app.CoderAgent.Cancel(p.session.ID)
-		}
+		p.app.CancelAgent(p.session.ID)
 		return nil
 	}
 
-	if p.app.CoderAgent != nil && p.app.CoderAgent.QueuedPrompts(p.session.ID) > 0 {
-		p.app.CoderAgent.ClearQueue(p.session.ID)
-		return nil
-	}
+	// Note: QueuedPrompts functionality not yet implemented in multi-agent manager
+	// TODO: Implement queued prompts in agent manager if needed
+
 	p.isCanceling = true
 	return cancelTimerCmd()
 }
@@ -767,10 +780,9 @@ func (p *chatPage) sendMessage(text string, attachments []message.Attachment) te
 		session = newSession
 		cmds = append(cmds, util.CmdHandler(chat.SessionSelectedMsg(session)))
 	}
-	if p.app.CoderAgent == nil {
-		return util.ReportError(fmt.Errorf("coder agent is not initialized"))
-	}
-	_, err := p.app.CoderAgent.Run(context.Background(), session.ID, text, attachments...)
+
+	// Run with multi-agent manager
+	_, err := p.app.RunAgent(context.Background(), session.ID, text, attachments...)
 	if err != nil {
 		return util.ReportError(err)
 	}
@@ -783,15 +795,19 @@ func (p *chatPage) Bindings() []key.Binding {
 		p.keyMap.NewSession,
 		p.keyMap.AddAttachment,
 	}
-	if p.app.CoderAgent != nil && p.app.CoderAgent.IsBusy() {
-		cancelBinding := p.keyMap.Cancel
-		if p.isCanceling {
-			cancelBinding = key.NewBinding(
-				key.WithKeys("esc", "alt+esc"),
-				key.WithHelp("esc", "press again to cancel"),
-			)
+
+	// Check if agent is busy using multi-agent manager
+	if p.session.ID != "" {
+		if manager, err := p.app.GetAgentManager(p.session.ID); err == nil && manager.IsBusy() {
+			cancelBinding := p.keyMap.Cancel
+			if p.isCanceling {
+				cancelBinding = key.NewBinding(
+					key.WithKeys("esc", "alt+esc"),
+					key.WithHelp("esc", "press again to cancel"),
+				)
+			}
+			bindings = append([]key.Binding{cancelBinding}, bindings...)
 		}
-		bindings = append([]key.Binding{cancelBinding}, bindings...)
 	}
 
 	switch p.focusedPane {
@@ -904,29 +920,27 @@ func (p *chatPage) Help() help.KeyMap {
 			}
 			return core.NewSimpleHelp(shortList, fullList)
 		}
-		if p.app.CoderAgent != nil && p.app.CoderAgent.IsBusy() {
-			cancelBinding := key.NewBinding(
-				key.WithKeys("esc", "alt+esc"),
-				key.WithHelp("esc", "cancel"),
-			)
-			if p.isCanceling {
-				cancelBinding = key.NewBinding(
+		// Check if agent is busy using multi-agent manager
+		if p.session.ID != "" {
+			if manager, err := p.app.GetAgentManager(p.session.ID); err == nil && manager.IsBusy() {
+				cancelBinding := key.NewBinding(
 					key.WithKeys("esc", "alt+esc"),
-					key.WithHelp("esc", "press again to cancel"),
+					key.WithHelp("esc", "cancel"),
+				)
+				if p.isCanceling {
+					cancelBinding = key.NewBinding(
+						key.WithKeys("esc", "alt+esc"),
+						key.WithHelp("esc", "press again to cancel"),
+					)
+				}
+				// Note: QueuedPrompts functionality not yet implemented in multi-agent manager
+				shortList = append(shortList, cancelBinding)
+				fullList = append(fullList,
+					[]key.Binding{
+						cancelBinding,
+					},
 				)
 			}
-			if p.app.CoderAgent != nil && p.app.CoderAgent.QueuedPrompts(p.session.ID) > 0 {
-				cancelBinding = key.NewBinding(
-					key.WithKeys("esc", "alt+esc"),
-					key.WithHelp("esc", "clear queue"),
-				)
-			}
-			shortList = append(shortList, cancelBinding)
-			fullList = append(fullList,
-				[]key.Binding{
-					cancelBinding,
-				},
-			)
 		}
 		globalBindings := []key.Binding{}
 		// we are in a session

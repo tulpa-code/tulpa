@@ -180,8 +180,17 @@ func (a *appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		)
 	// Compact
 	case commands.CompactMsg:
+		// Get current agent for the session
+		manager, err := a.app.GetAgentManager(msg.SessionID)
+		if err != nil {
+			return a, util.ReportError(err)
+		}
+		currentAgent, err := manager.CurrentAgent()
+		if err != nil {
+			return a, util.ReportError(err)
+		}
 		return a, util.CmdHandler(dialogs.OpenDialogMsg{
-			Model: compact.NewCompactDialogCmp(a.app.CoderAgent, msg.SessionID, true),
+			Model: compact.NewCompactDialogCmp(currentAgent, msg.SessionID, true),
 		})
 	case commands.QuitMsg:
 		return a, util.CmdHandler(dialogs.OpenDialogMsg{
@@ -195,13 +204,17 @@ func (a *appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a, a.handleWindowResize(a.wWidth, a.wHeight)
 	// Model Switch
 	case models.ModelSelectedMsg:
-		if a.app != nil && a.app.CoderAgent != nil && a.app.CoderAgent.IsBusy() {
-			return a, util.ReportWarn("Agent is busy, please wait...")
+		// Check if any agent is busy
+		if a.selectedSessionID != "" {
+			if manager, err := a.app.GetAgentManager(a.selectedSessionID); err == nil && manager.IsBusy() {
+				return a, util.ReportWarn("Agent is busy, please wait...")
+			}
 		}
 
 		config.Get().UpdatePreferredModel(msg.ModelType, msg.Model)
 
 		// Update the agent with the new model/provider configuration
+		// Note: In multi-agent mode, model changes will apply to new sessions
 		if err := a.app.UpdateAgentModel(); err != nil {
 			return a, util.ReportError(fmt.Errorf("model changed to %s but failed to update agent: %v", msg.Model.Model, err))
 		}
@@ -272,13 +285,18 @@ func (a *appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Get current session to check token usage
 			session, err := a.app.Sessions.Get(context.Background(), a.selectedSessionID)
 			if err == nil {
-				model := a.app.CoderAgent.Model()
-				contextWindow := model.ContextWindow
-				tokens := session.CompletionTokens + session.PromptTokens
-				if (tokens >= int64(float64(contextWindow)*0.95)) && !config.Get().Options.DisableAutoSummarize { // Show compact confirmation dialog
-					cmds = append(cmds, util.CmdHandler(dialogs.OpenDialogMsg{
-						Model: compact.NewCompactDialogCmp(a.app.CoderAgent, a.selectedSessionID, false),
-					}))
+				// Get current agent manager and agent
+				if manager, err := a.app.GetAgentManager(a.selectedSessionID); err == nil {
+					if currentAgent, err := manager.CurrentAgent(); err == nil {
+						model := currentAgent.Model()
+						contextWindow := model.ContextWindow
+						tokens := session.CompletionTokens + session.PromptTokens
+						if (tokens >= int64(float64(contextWindow)*0.95)) && !config.Get().Options.DisableAutoSummarize { // Show compact confirmation dialog
+							cmds = append(cmds, util.CmdHandler(dialogs.OpenDialogMsg{
+								Model: compact.NewCompactDialogCmp(currentAgent, a.selectedSessionID, false),
+							}))
+						}
+					}
 				}
 			}
 		}
@@ -485,8 +503,11 @@ func (a *appModel) handleKeyPressMsg(msg tea.KeyPressMsg) tea.Cmd {
 		)
 		return tea.Sequence(cmds...)
 	case key.Matches(msg, a.keyMap.Suspend):
-		if a.app != nil && a.app.CoderAgent != nil && a.app.CoderAgent.IsBusy() {
-			return util.ReportWarn("Agent is busy, please wait...")
+		// Check if any agent is busy
+		if a.selectedSessionID != "" {
+			if manager, err := a.app.GetAgentManager(a.selectedSessionID); err == nil && manager.IsBusy() {
+				return util.ReportWarn("Agent is busy, please wait...")
+			}
 		}
 		return tea.Suspend
 	default:
@@ -505,9 +526,12 @@ func (a *appModel) handleKeyPressMsg(msg tea.KeyPressMsg) tea.Cmd {
 
 // moveToPage handles navigation between different pages in the application.
 func (a *appModel) moveToPage(pageID page.PageID) tea.Cmd {
-	if a.app != nil && a.app.CoderAgent != nil && a.app.CoderAgent.IsBusy() {
-		// TODO: maybe remove this :  For now we don't move to any page if the agent is busy
-		return util.ReportWarn("Agent is busy, please wait...")
+	// Check if any agent is busy
+	if a.selectedSessionID != "" {
+		if manager, err := a.app.GetAgentManager(a.selectedSessionID); err == nil && manager.IsBusy() {
+			// TODO: maybe remove this :  For now we don't move to any page if the agent is busy
+			return util.ReportWarn("Agent is busy, please wait...")
+		}
 	}
 
 	var cmds []tea.Cmd
@@ -603,10 +627,13 @@ func (a *appModel) View() tea.View {
 	view.Layer = canvas
 	view.Cursor = cursor
 	view.ProgressBar = tea.NewProgressBar(tea.ProgressBarNone, 0)
-	if a.app != nil && a.app.CoderAgent != nil && a.app.CoderAgent.IsBusy() {
-		// use a random percentage to prevent the ghostty from hiding it after
-		// a timeout.
-		view.ProgressBar = tea.NewProgressBar(tea.ProgressBarIndeterminate, rand.Intn(100))
+	// Check if any agent is busy for progress bar
+	if a.selectedSessionID != "" {
+		if manager, err := a.app.GetAgentManager(a.selectedSessionID); err == nil && manager.IsBusy() {
+			// use a random percentage to prevent the ghostty from hiding it after
+			// a timeout.
+			view.ProgressBar = tea.NewProgressBar(tea.ProgressBarIndeterminate, rand.Intn(100))
+		}
 	}
 	return view
 }

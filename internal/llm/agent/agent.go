@@ -106,15 +106,15 @@ func NewAgent(
 	var agentToolFn func() (tools.BaseTool, error)
 	if agentCfg.ID == "coder" && slices.Contains(agentCfg.AllowedTools, AgentToolName) {
 		agentToolFn = func() (tools.BaseTool, error) {
-			taskAgentCfg := config.Get().Agents["task"]
-			if taskAgentCfg.ID == "" {
-				return nil, fmt.Errorf("task agent not found in config")
+			subAgentCfg := config.Get().Agents["task"]
+			if subAgentCfg.ID == "" {
+				return nil, fmt.Errorf("subagent not found in config")
 			}
-			taskAgent, err := NewAgent(ctx, taskAgentCfg, permissions, sessions, messages, history, lspClients)
+			subAgent, err := NewAgent(ctx, subAgentCfg, permissions, sessions, messages, history, lspClients)
 			if err != nil {
-				return nil, fmt.Errorf("failed to create task agent: %w", err)
+				return nil, fmt.Errorf("failed to create subagent: %w", err)
 			}
-			return NewAgentTool(taskAgent, sessions, messages), nil
+			return NewAgentTool(subAgent, sessions, messages), nil
 		}
 	}
 
