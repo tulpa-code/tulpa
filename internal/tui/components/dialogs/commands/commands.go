@@ -342,47 +342,6 @@ func (c *commandDialogCmp) defaultCommands() []Command {
 					},
 				},
 			)
-
-			// Add individual agent switching commands (ctrl+1-5)
-			// Get sorted agent IDs to maintain consistent ordering
-			agentIDs := make([]string, 0, len(cfg.Agents))
-			for id := range cfg.Agents {
-				agentIDs = append(agentIDs, id)
-			}
-			// Sort for consistency
-			type agentSort struct {
-				id   string
-				name string
-			}
-			sorted := make([]agentSort, 0, len(agentIDs))
-			for _, id := range agentIDs {
-				agentCfg := cfg.Agents[id]
-				name := agentCfg.Name
-				if name == "" {
-					name = id
-				}
-				sorted = append(sorted, agentSort{id: id, name: name})
-			}
-
-			// Add commands for first 5 agents
-			shortcuts := []string{"ctrl+1", "ctrl+2", "ctrl+3", "ctrl+4", "ctrl+5"}
-			for i := 0; i < min(len(sorted), 5); i++ {
-				agent := sorted[i]
-				agentNum := i + 1
-				commands = append(commands, Command{
-					ID:          fmt.Sprintf("agent_%d", agentNum),
-					Title:       fmt.Sprintf("Switch to %s", agent.name),
-					Description: fmt.Sprintf("Switch to agent: %s", agent.name),
-					Shortcut:    shortcuts[i],
-					Handler: func(agentIndex int) func(cmd Command) tea.Cmd {
-						return func(cmd Command) tea.Cmd {
-							return func() tea.Msg {
-								return SwitchToAgentMsg{Index: agentIndex}
-							}
-						}
-					}(agentNum),
-				})
-			}
 		}
 	}
 

@@ -3,7 +3,6 @@ package chat
 import (
 	"context"
 	"fmt"
-	"slices"
 	"time"
 
 	"github.com/charmbracelet/bubbles/v2/help"
@@ -1169,20 +1168,13 @@ func (p *chatPage) cycleNextAgent() tea.Cmd {
 		return nil
 	}
 
-	cfg := config.Get()
 	agentManager, err := p.app.GetAgentManager(p.session.ID)
 	if err != nil {
 		return util.ReportError(fmt.Errorf("failed to get agent manager: %w", err))
 	}
 
-	// Get the list of available agents
-	var availableAgents []string
-	for _, agentID := range agentManager.AvailableAgents() {
-		if slices.Contains(cfg.Agents[agentManager.ActiveAgentID()].AllowedSubagents, agentID) {
-			availableAgents = append(availableAgents, agentID)
-		}
-	}
-
+	// Get all available agents (not filtered by AllowedSubagents)
+	availableAgents := agentManager.AvailableAgents()
 	if len(availableAgents) <= 1 {
 		return util.ReportWarn("No other agents available to switch to")
 	}
@@ -1193,11 +1185,16 @@ func (p *chatPage) cycleNextAgent() tea.Cmd {
 	}
 
 	activeAgentID := agentManager.ActiveAgentID()
+	cfg := config.Get()
+	agentName := cfg.Agents[activeAgentID].Name
+	if agentName == "" {
+		agentName = activeAgentID
+	}
 
 	// Update components to reflect the new agent
 	return tea.Batch(
 		p.updateComponentsForAgentSwitch(),
-		util.ReportInfo(fmt.Sprintf("Switched to agent: %s", activeAgentID)),
+		util.ReportInfo(fmt.Sprintf("Switched to agent: %s", agentName)),
 	)
 }
 
@@ -1206,20 +1203,13 @@ func (p *chatPage) cyclePreviousAgent() tea.Cmd {
 		return nil
 	}
 
-	cfg := config.Get()
 	agentManager, err := p.app.GetAgentManager(p.session.ID)
 	if err != nil {
 		return util.ReportError(fmt.Errorf("failed to get agent manager: %w", err))
 	}
 
-	// Get the list of available agents
-	var availableAgents []string
-	for _, agentID := range agentManager.AvailableAgents() {
-		if slices.Contains(cfg.Agents[agentManager.ActiveAgentID()].AllowedSubagents, agentID) {
-			availableAgents = append(availableAgents, agentID)
-		}
-	}
-
+	// Get all available agents (not filtered by AllowedSubagents)
+	availableAgents := agentManager.AvailableAgents()
 	if len(availableAgents) <= 1 {
 		return util.ReportWarn("No other agents available to switch to")
 	}
@@ -1230,11 +1220,16 @@ func (p *chatPage) cyclePreviousAgent() tea.Cmd {
 	}
 
 	activeAgentID := agentManager.ActiveAgentID()
+	cfg := config.Get()
+	agentName := cfg.Agents[activeAgentID].Name
+	if agentName == "" {
+		agentName = activeAgentID
+	}
 
 	// Update components to reflect the new agent
 	return tea.Batch(
 		p.updateComponentsForAgentSwitch(),
-		util.ReportInfo(fmt.Sprintf("Switched to agent: %s", activeAgentID)),
+		util.ReportInfo(fmt.Sprintf("Switched to agent: %s", agentName)),
 	)
 }
 
@@ -1243,19 +1238,13 @@ func (p *chatPage) switchToAgentByIndex(index int) tea.Cmd {
 		return nil
 	}
 
-	cfg := config.Get()
 	agentManager, err := p.app.GetAgentManager(p.session.ID)
 	if err != nil {
 		return util.ReportError(fmt.Errorf("failed to get agent manager: %w", err))
 	}
 
-	// Get the list of available agents
-	var availableAgents []string
-	for _, agentID := range agentManager.AvailableAgents() {
-		if slices.Contains(cfg.Agents[agentManager.ActiveAgentID()].AllowedSubagents, agentID) {
-			availableAgents = append(availableAgents, agentID)
-		}
-	}
+	// Get all available agents (not filtered by AllowedSubagents)
+	availableAgents := agentManager.AvailableAgents()
 
 	if index >= len(availableAgents) {
 		return util.ReportWarn(fmt.Sprintf("Agent index %d not available", index+1))
@@ -1268,10 +1257,16 @@ func (p *chatPage) switchToAgentByIndex(index int) tea.Cmd {
 		return util.ReportError(fmt.Errorf("failed to switch to agent %s: %w", targetAgentID, err))
 	}
 
+	cfg := config.Get()
+	agentName := cfg.Agents[targetAgentID].Name
+	if agentName == "" {
+		agentName = targetAgentID
+	}
+
 	// Update components to reflect the new agent
 	return tea.Batch(
 		p.updateComponentsForAgentSwitch(),
-		util.ReportInfo(fmt.Sprintf("Switched to agent: %s", targetAgentID)),
+		util.ReportInfo(fmt.Sprintf("Switched to agent: %s", agentName)),
 	)
 }
 
