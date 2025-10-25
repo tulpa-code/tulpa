@@ -15,6 +15,7 @@ import (
 	"github.com/tulpa-code/tulpa/internal/tui/components/core"
 	"github.com/tulpa-code/tulpa/internal/tui/components/dialogs"
 	"github.com/tulpa-code/tulpa/internal/tui/exp/list"
+	chatpage "github.com/tulpa-code/tulpa/internal/tui/page/chat"
 	"github.com/tulpa-code/tulpa/internal/tui/styles"
 	"github.com/tulpa-code/tulpa/internal/tui/util"
 )
@@ -299,6 +300,38 @@ func (c *commandDialogCmp) defaultCommands() []Command {
 				})
 			},
 		})
+	}
+
+	// Add agent switching commands if there's an active session
+	if c.sessionID != "" {
+		cfg := config.Get()
+		// Only show if there are multiple agents configured
+		if len(cfg.Agents) > 1 {
+			commands = append(commands,
+				Command{
+					ID:          "next_agent",
+					Title:       "Next Agent",
+					Description: "Switch to next agent",
+					Shortcut:    "ctrl+tab",
+					Handler: func(cmd Command) tea.Cmd {
+						return func() tea.Msg {
+							return chatpage.CycleNextAgentMsg{}
+						}
+					},
+				},
+				Command{
+					ID:          "previous_agent",
+					Title:       "Previous Agent",
+					Description: "Switch to previous agent",
+					Shortcut:    "ctrl+shift+tab",
+					Handler: func(cmd Command) tea.Cmd {
+						return func() tea.Msg {
+							return chatpage.CyclePreviousAgentMsg{}
+						}
+					},
+				},
+			)
+		}
 	}
 
 	// Add reasoning toggle for models that support it

@@ -721,6 +721,19 @@ func (p *chatPage) setSession(session session.Session) tea.Cmd {
 	cmds = append(cmds, p.header.SetSession(session))
 	cmds = append(cmds, p.editor.SetSession(session))
 
+	// Notify header of current active agent
+	if session.ID != "" {
+		if manager, err := p.app.GetAgentManager(session.ID); err == nil {
+			activeAgentID := manager.ActiveAgentID()
+			cmds = append(cmds, func() tea.Msg {
+				return AgentChangedMsg{
+					AgentID:   activeAgentID,
+					SessionID: session.ID,
+				}
+			})
+		}
+	}
+
 	return tea.Sequence(cmds...)
 }
 
@@ -993,6 +1006,10 @@ func (p *chatPage) Help() help.KeyMap {
 			// Commands
 			commandsBinding,
 		)
+		// Add agent switching to short help if in a session
+		if p.session.ID != "" {
+			shortList = append(shortList, p.keyMap.NextAgent)
+		}
 		fullList = append(fullList, globalBindings)
 
 		switch p.focusedPane {

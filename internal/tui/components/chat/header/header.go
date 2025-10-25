@@ -130,19 +130,28 @@ func (h *header) details(availWidth int) string {
 		parts = append(parts, s.Error.Render(fmt.Sprintf("%s%d", styles.ErrorIcon, errorCount)))
 	}
 
-	// Use current agent ID if available, otherwise fall back to "coder"
+	// Display current active agent
 	agentID := h.currentAgentID
 	if agentID == "" {
 		agentID = "coder" // fallback for backwards compatibility
 	}
-	
+
 	cfg := config.Get()
 	agentCfg := cfg.Agents[agentID]
 	if agentCfg.Model == "" {
 		// fallback to coder if agent not found
 		agentCfg = cfg.Agents["coder"]
+		agentID = "coder"
 	}
-	
+
+	// Add agent indicator with color
+	agentName := agentCfg.Name
+	if agentName == "" {
+		agentName = agentID
+	}
+	agentIndicator := s.Base.Foreground(styles.CurrentTheme().Green).Bold(true).Render("⚡ " + agentName)
+	parts = append(parts, agentIndicator)
+
 	model := config.Get().GetModelByType(agentCfg.Model)
 	percentage := (float64(h.session.CompletionTokens+h.session.PromptTokens) / float64(model.ContextWindow)) * 100
 	formattedPercentage := s.Muted.Render(fmt.Sprintf("%d%%", int(percentage)))
