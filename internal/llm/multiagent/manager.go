@@ -127,18 +127,14 @@ func (m *Manager) SwitchAgent(agentID string) error {
 	}
 
 	// Update active agent and history
-	m.activeAgent = agentID
-	
-	// Update history - move to end if already exists, otherwise append
-	history := m.agentHistory
-	for i, id := range history {
-		if id == agentID {
-			history = append(history[:i], history[i+1:]...)
-			break
-		}
+	if err := m.switchAgentInternal(agentID); err != nil {
+		return err
 	}
-	history = append(history, agentID)
-	m.agentHistory = history
+
+	// Save state to database
+	if err := m.saveSessionAgentState(context.Background()); err != nil {
+		slog.Warn("failed to save agent state after switching", "error", err)
+	}
 
 	return nil
 }
@@ -204,7 +200,16 @@ func (m *Manager) CycleNext() error {
 	nextIndex := (currentIndex + 1) % len(available)
 	nextAgentID := available[nextIndex]
 
-	return m.switchAgentInternal(nextAgentID)
+	if err := m.switchAgentInternal(nextAgentID); err != nil {
+		return err
+	}
+
+	// Save state to database
+	if err := m.saveSessionAgentState(context.Background()); err != nil {
+		slog.Warn("failed to save agent state after cycling", "error", err)
+	}
+
+	return nil
 }
 
 // CyclePrevious cycles to the previous agent (Shift+Tab key behavior)
@@ -230,7 +235,16 @@ func (m *Manager) CyclePrevious() error {
 	prevIndex := (currentIndex - 1 + len(available)) % len(available)
 	prevAgentID := available[prevIndex]
 
-	return m.switchAgentInternal(prevAgentID)
+	if err := m.switchAgentInternal(prevAgentID); err != nil {
+		return err
+	}
+
+	// Save state to database
+	if err := m.saveSessionAgentState(context.Background()); err != nil {
+		slog.Warn("failed to save agent state after cycling", "error", err)
+	}
+
+	return nil
 }
 
 // getAvailableAgentIDs returns agent IDs in a consistent order for cycling
