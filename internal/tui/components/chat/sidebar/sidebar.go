@@ -70,14 +70,14 @@ type Sidebar interface {
 }
 
 type sidebarCmp struct {
-	width, height int
-	session       session.Session
-	logo          string
-	cwd           string
-	lspClients    *csync.Map[string, *lsp.Client]
-	compactMode   bool
-	history       history.Service
-	files         *csync.Map[string, SessionFile]
+	width, height  int
+	session        session.Session
+	logo           string
+	cwd            string
+	lspClients     *csync.Map[string, *lsp.Client]
+	compactMode    bool
+	history        history.Service
+	files          *csync.Map[string, SessionFile]
 	currentAgentID string
 }
 
@@ -143,6 +143,14 @@ func (m *sidebarCmp) View() string {
 		parts = append(parts, t.S().Muted.Render(m.session.Title), "")
 	} else if m.session.ID != "" {
 		parts = append(parts, t.S().Text.Render(m.session.Title), "")
+	}
+
+	// Show current agent indicator
+	if m.session.ID != "" {
+		agentIndicator := m.currentAgentIndicator()
+		if agentIndicator != "" {
+			parts = append(parts, agentIndicator, "")
+		}
 	}
 
 	if !m.compactMode {
@@ -541,15 +549,45 @@ func formatTokensAndCost(tokens, contextWindow int64, cost float64) string {
 	return fmt.Sprintf("%s %s", formattedTokens, formattedCost)
 }
 
-func (s *sidebarCmp) currentModelBlock() string {
+func (s *sidebarCmp) currentAgentIndicator() string {
 	cfg := config.Get()
-	
+
 	// Use current agent ID if available, otherwise fall back to "coder"
 	agentID := s.currentAgentID
 	if agentID == "" {
 		agentID = "coder" // fallback for backwards compatibility
 	}
-	
+
+	agentCfg := cfg.Agents[agentID]
+	if agentCfg.Model == "" {
+		// fallback to coder if agent not found
+		agentCfg = cfg.Agents["coder"]
+		agentID = "coder"
+	}
+
+	// Get agent name
+	agentName := agentCfg.Name
+	if agentName == "" {
+		agentName = agentID
+	}
+
+	t := styles.CurrentTheme()
+
+	// Create agent indicator with lightning bolt and green color
+	agentIndicator := t.S().Base.Foreground(t.Green).Bold(true).Render("⚡ " + agentName)
+
+	return agentIndicator
+}
+
+func (s *sidebarCmp) currentModelBlock() string {
+	cfg := config.Get()
+
+	// Use current agent ID if available, otherwise fall back to "coder"
+	agentID := s.currentAgentID
+	if agentID == "" {
+		agentID = "coder" // fallback for backwards compatibility
+	}
+
 	agentCfg := cfg.Agents[agentID]
 	if agentCfg.Model == "" {
 		// fallback to coder if agent not found
