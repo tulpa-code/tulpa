@@ -14,15 +14,10 @@ import (
 	"github.com/tulpa-code/tulpa/internal/lsp"
 	"github.com/tulpa-code/tulpa/internal/pubsub"
 	"github.com/tulpa-code/tulpa/internal/session"
+	"github.com/tulpa-code/tulpa/internal/tui/components/dialogs/commands"
 	"github.com/tulpa-code/tulpa/internal/tui/styles"
 	"github.com/tulpa-code/tulpa/internal/tui/util"
 )
-
-// AgentChangedMsg is sent when active agent changes
-type AgentChangedMsg struct {
-	AgentID   string
-	SessionID string
-}
 
 type Header interface {
 	util.Model
@@ -59,7 +54,7 @@ func (h *header) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				h.session = msg.Payload
 			}
 		}
-	case AgentChangedMsg:
+	case commands.AgentChangedMsg:
 		if h.session.ID == msg.SessionID {
 			h.currentAgentID = msg.AgentID
 		}

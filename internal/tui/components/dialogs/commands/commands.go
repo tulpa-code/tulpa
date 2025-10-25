@@ -16,7 +16,6 @@ import (
 	"github.com/tulpa-code/tulpa/internal/tui/components/core"
 	"github.com/tulpa-code/tulpa/internal/tui/components/dialogs"
 	"github.com/tulpa-code/tulpa/internal/tui/exp/list"
-	chatpage "github.com/tulpa-code/tulpa/internal/tui/page/chat"
 	"github.com/tulpa-code/tulpa/internal/tui/styles"
 	"github.com/tulpa-code/tulpa/internal/tui/util"
 )
@@ -74,6 +73,17 @@ type (
 	OpenExternalEditorMsg  struct{}
 	ToggleYoloModeMsg      struct{}
 	CompactMsg             struct {
+		SessionID string
+	}
+	// Agent switching messages
+	SwitchToAgentMsg struct {
+		AgentID string
+		Index   int // 1-based index for switching by number
+	}
+	CycleNextAgentMsg     struct{}
+	CyclePreviousAgentMsg struct{}
+	AgentChangedMsg       struct {
+		AgentID   string
 		SessionID string
 	}
 )
@@ -316,7 +326,7 @@ func (c *commandDialogCmp) defaultCommands() []Command {
 					Shortcut:    "ctrl+tab",
 					Handler: func(cmd Command) tea.Cmd {
 						return func() tea.Msg {
-							return chatpage.CycleNextAgentMsg{}
+							return CycleNextAgentMsg{}
 						}
 					},
 				},
@@ -327,7 +337,7 @@ func (c *commandDialogCmp) defaultCommands() []Command {
 					Shortcut:    "ctrl+shift+tab",
 					Handler: func(cmd Command) tea.Cmd {
 						return func() tea.Msg {
-							return chatpage.CyclePreviousAgentMsg{}
+							return CyclePreviousAgentMsg{}
 						}
 					},
 				},
@@ -367,7 +377,7 @@ func (c *commandDialogCmp) defaultCommands() []Command {
 					Handler: func(agentIndex int) func(cmd Command) tea.Cmd {
 						return func(cmd Command) tea.Cmd {
 							return func() tea.Msg {
-								return chatpage.SwitchToAgentMsg{Index: agentIndex}
+								return SwitchToAgentMsg{Index: agentIndex}
 							}
 						}
 					}(agentNum),

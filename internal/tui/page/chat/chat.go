@@ -47,15 +47,6 @@ type (
 		Focused bool
 	}
 	CancelTimerExpiredMsg struct{}
-	SwitchToAgentMsg struct {
-		AgentID string
-	}
-	CycleNextAgentMsg struct{}
-	CyclePreviousAgentMsg struct{}
-	AgentChangedMsg struct {
-		AgentID string
-		SessionID string
-	}
 )
 
 type PanelType string
@@ -313,7 +304,7 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		}
 		return p, tea.Batch(cmds...)
-	case AgentChangedMsg:
+	case commands.AgentChangedMsg:
 		// Forward agent change to components that need it
 		u, cmd := p.sidebar.Update(msg)
 		p.sidebar = u.(sidebar.Sidebar)
@@ -322,6 +313,17 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		p.header = u.(header.Header)
 		cmds = append(cmds, cmd)
 		return p, tea.Batch(cmds...)
+	case commands.CycleNextAgentMsg:
+		return p, p.cycleNextAgent()
+	case commands.CyclePreviousAgentMsg:
+		return p, p.cyclePreviousAgent()
+	case commands.SwitchToAgentMsg:
+		if msg.Index > 0 {
+			// Index is 1-based, convert to 0-based
+			return p, p.switchToAgentByIndex(msg.Index - 1)
+		}
+		// If AgentID is provided instead, we could add logic here
+		return p, nil
 	case pubsub.Event[message.Message],
 		anim.StepMsg,
 		spinner.TickMsg:
@@ -726,7 +728,7 @@ func (p *chatPage) setSession(session session.Session) tea.Cmd {
 		if manager, err := p.app.GetAgentManager(session.ID); err == nil {
 			activeAgentID := manager.ActiveAgentID()
 			cmds = append(cmds, func() tea.Msg {
-				return AgentChangedMsg{
+				return commands.AgentChangedMsg{
 					AgentID:   activeAgentID,
 					SessionID: session.ID,
 				}
@@ -1190,11 +1192,13 @@ func (p *chatPage) cycleNextAgent() tea.Cmd {
 		return util.ReportError(fmt.Errorf("failed to cycle to next agent: %w", err))
 	}
 
-	// Update components to reflect the new agent
-	p.updateComponentsForAgentSwitch()
-
 	activeAgentID := agentManager.ActiveAgentID()
-	return util.ReportInfo(fmt.Sprintf("Switched to agent: %s", activeAgentID))
+
+	// Update components to reflect the new agent
+	return tea.Batch(
+		p.updateComponentsForAgentSwitch(),
+		util.ReportInfo(fmt.Sprintf("Switched to agent: %s", activeAgentID)),
+	)
 }
 
 func (p *chatPage) cyclePreviousAgent() tea.Cmd {
@@ -1225,11 +1229,13 @@ func (p *chatPage) cyclePreviousAgent() tea.Cmd {
 		return util.ReportError(fmt.Errorf("failed to cycle to previous agent: %w", err))
 	}
 
-	// Update components to reflect the new agent
-	p.updateComponentsForAgentSwitch()
-
 	activeAgentID := agentManager.ActiveAgentID()
-	return util.ReportInfo(fmt.Sprintf("Switched to agent: %s", activeAgentID))
+
+	// Update components to reflect the new agent
+	return tea.Batch(
+		p.updateComponentsForAgentSwitch(),
+		util.ReportInfo(fmt.Sprintf("Switched to agent: %s", activeAgentID)),
+	)
 }
 
 func (p *chatPage) switchToAgentByIndex(index int) tea.Cmd {
@@ -1256,16 +1262,17 @@ func (p *chatPage) switchToAgentByIndex(index int) tea.Cmd {
 	}
 
 	targetAgentID := availableAgents[index]
-	
+
 	// Switch to the specified agent
 	if err := agentManager.SwitchAgent(targetAgentID); err != nil {
 		return util.ReportError(fmt.Errorf("failed to switch to agent %s: %w", targetAgentID, err))
 	}
 
 	// Update components to reflect the new agent
-	p.updateComponentsForAgentSwitch()
-
-	return util.ReportInfo(fmt.Sprintf("Switched to agent: %s", targetAgentID))
+	return tea.Batch(
+		p.updateComponentsForAgentSwitch(),
+		util.ReportInfo(fmt.Sprintf("Switched to agent: %s", targetAgentID)),
+	)
 }
 
 func (p *chatPage) updateComponentsForAgentSwitch() tea.Cmd {
@@ -1274,12 +1281,12 @@ func (p *chatPage) updateComponentsForAgentSwitch() tea.Cmd {
 	if err != nil {
 		return util.ReportError(fmt.Errorf("failed to get agent manager: %w", err))
 	}
-	
+
 	activeAgentID := agentManager.ActiveAgentID()
-	
+
 	// Send agent changed message to components
 	return func() tea.Msg {
-		return AgentChangedMsg{
+		return commands.AgentChangedMsg{
 			AgentID:   activeAgentID,
 			SessionID: p.session.ID,
 		}

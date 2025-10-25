@@ -21,6 +21,7 @@ import (
 	"github.com/tulpa-code/tulpa/internal/tui/components/chat"
 	"github.com/tulpa-code/tulpa/internal/tui/components/core"
 	"github.com/tulpa-code/tulpa/internal/tui/components/core/layout"
+	"github.com/tulpa-code/tulpa/internal/tui/components/dialogs/commands"
 	"github.com/tulpa-code/tulpa/internal/tui/components/files"
 	"github.com/tulpa-code/tulpa/internal/tui/components/logo"
 	lspcomponent "github.com/tulpa-code/tulpa/internal/tui/components/lsp"
@@ -30,12 +31,6 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
-
-// AgentChangedMsg is sent when the active agent changes
-type AgentChangedMsg struct {
-	AgentID   string
-	SessionID string
-}
 
 type FileHistory struct {
 	initialVersion history.File
@@ -113,7 +108,7 @@ func (m *sidebarCmp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.session = msg.Payload
 			}
 		}
-	case AgentChangedMsg:
+	case commands.AgentChangedMsg:
 		if m.session.ID == msg.SessionID {
 			m.currentAgentID = msg.AgentID
 		}
