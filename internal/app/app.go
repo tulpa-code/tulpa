@@ -3,26 +3,24 @@ package app
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
 	"sync"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/catwalk/pkg/catwalk"
 	"github.com/tulpa-code/tulpa/internal/config"
 	"github.com/tulpa-code/tulpa/internal/csync"
 	"github.com/tulpa-code/tulpa/internal/db"
-	"github.com/tulpa-code/tulpa/internal/format"
 	"github.com/tulpa-code/tulpa/internal/history"
 	"github.com/tulpa-code/tulpa/internal/llm/agent"
-	"github.com/tulpa-code/tulpa/internal/log"
+	"github.com/tulpa-code/tulpa/internal/llm/multiagent"
 	"github.com/tulpa-code/tulpa/internal/lsp"
 	"github.com/tulpa-code/tulpa/internal/message"
 	"github.com/tulpa-code/tulpa/internal/permission"
 	"github.com/tulpa-code/tulpa/internal/pubsub"
 	"github.com/tulpa-code/tulpa/internal/session"
-	"github.com/charmbracelet/x/ansi"
 )
 
 type App struct {
@@ -31,9 +29,12 @@ type App struct {
 	History     history.Service
 	Permissions permission.Service
 
-	CoderAgent agent.Service
+	AgentManagers *csync.Map[string, *multiagent.Manager] // sessionID -> manager
+	LSPClients    *csync.Map[string, *lsp.Client]
 
-	LSPClients *csync.Map[string, *lsp.Client]
+	// Legacy coder agent for backwards compatibility
+	coderAgent agent.Service
+	CoderAgent agent.Service // Public field for TUI compatibility
 
 	config *config.Config
 
@@ -65,6 +66,7 @@ func New(ctx context.Context, conn *sql.DB, cfg *config.Config) (*App, error) {
 		History:     files,
 		Permissions: permission.NewPermissionService(cfg.WorkingDir(), skipPermissionsRequests, allowedTools),
 		LSPClients:  csync.NewMap[string, *lsp.Client](),
+		AgentManagers: csync.NewMap[string, *multiagent.Manager](),
 
 		globalCtx: ctx,
 
@@ -83,7 +85,10 @@ func New(ctx context.Context, conn *sql.DB, cfg *config.Config) (*App, error) {
 	// cleanup database upon app shutdown
 	app.cleanupFuncs = append(app.cleanupFuncs, conn.Close)
 
-	// GetAgentManager returns agent manager for a session
+	return app, nil
+}
+
+// GetAgentManager returns agent manager for a session
 func (a *App) GetAgentManager(sessionID string) (*multiagent.Manager, error) {
 	manager, exists := a.AgentManagers.Get(sessionID)
 	if exists {
@@ -99,7 +104,7 @@ func (a *App) GetAgentManager(sessionID string) (*multiagent.Manager, error) {
 		a.Messages,
 		a.Permissions,
 		func(ctx context.Context, cfg config.Agent) (agent.Service, error) {
-			return agent.New(ctx, cfg, a.Permissions, a.Sessions, a.Messages, a.config, a.createAgent)
+			return agent.NewAgent(ctx, cfg, a.Permissions, a.Sessions, a.Messages, a.History, a.LSPClients)
 		},
 	)
 	if err != nil {
@@ -158,233 +163,44 @@ func (a *App) CyclePreviousAgent(sessionID string) error {
 	return manager.CyclePrevious()
 }
 
-	// TODO: remove the concept of agent config, most likely.
-	if cfg.IsConfigured() {
-		if err := app.InitCoderAgent(); err != nil {
-			return nil, fmt.Errorf("failed to initialize coder agent: %w", err)
-		}
-	} else {
-		slog.Warn("No agent configuration found")
-	}
-	return app, nil
+// setupEvents sets up event handlers for the app.
+func (a *App) setupEvents() {
+	// We can add general event handling here if needed
 }
+
+
+
 
 // Config returns the application configuration.
-func (app *App) Config() *config.Config {
-	return app.config
-}
-
-// RunNonInteractive handles the execution flow when a prompt is provided via
-// CLI flag.
-func (app *App) RunNonInteractive(ctx context.Context, prompt string, quiet bool) error {
-	slog.Info("Running in non-interactive mode")
-
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	// Start progress bar and spinner
-	fmt.Printf(ansi.SetIndeterminateProgressBar)
-	defer fmt.Printf(ansi.ResetProgressBar)
-
-	var spinner *format.Spinner
-	if !quiet {
-		spinner = format.NewSpinner(ctx, cancel, "Generating")
-		spinner.Start()
-	}
-
-	// Helper function to stop spinner once.
-	stopSpinner := func() {
-		if !quiet && spinner != nil {
-			spinner.Stop()
-			spinner = nil
-		}
-	}
-	defer stopSpinner()
-
-	const maxPromptLengthForTitle = 100
-	titlePrefix := "Non-interactive: "
-	var titleSuffix string
-
-	if len(prompt) > maxPromptLengthForTitle {
-		titleSuffix = prompt[:maxPromptLengthForTitle] + "..."
-	} else {
-		titleSuffix = prompt
-	}
-	title := titlePrefix + titleSuffix
-
-	sess, err := app.Sessions.Create(ctx, title)
-	if err != nil {
-		return fmt.Errorf("failed to create session for non-interactive mode: %w", err)
-	}
-	slog.Info("Created session for non-interactive run", "session_id", sess.ID)
-
-	// Automatically approve all permission requests for this non-interactive session
-	app.Permissions.AutoApproveSession(sess.ID)
-
-	done, err := app.CoderAgent.Run(ctx, sess.ID, prompt)
-	if err != nil {
-		return fmt.Errorf("failed to start agent processing stream: %w", err)
-	}
-
-	messageEvents := app.Messages.Subscribe(ctx)
-	messageReadBytes := make(map[string]int)
-
-	for {
-		select {
-		case result := <-done:
-			stopSpinner()
-
-			if result.Error != nil {
-				if errors.Is(result.Error, context.Canceled) || errors.Is(result.Error, agent.ErrRequestCancelled) {
-					slog.Info("Non-interactive: agent processing cancelled", "session_id", sess.ID)
-					return nil
-				}
-				return fmt.Errorf("agent processing failed: %w", result.Error)
-			}
-
-			msgContent := result.Message.Content().String()
-			readBts := messageReadBytes[result.Message.ID]
-
-			if len(msgContent) < readBts {
-				slog.Error("Non-interactive: message content is shorter than read bytes", "message_length", len(msgContent), "read_bytes", readBts)
-				return fmt.Errorf("message content is shorter than read bytes: %d < %d", len(msgContent), readBts)
-			}
-			fmt.Println(msgContent[readBts:])
-			messageReadBytes[result.Message.ID] = len(msgContent)
-
-			slog.Info("Non-interactive: run completed", "session_id", sess.ID)
-			return nil
-
-		case event := <-messageEvents:
-			msg := event.Payload
-			if msg.SessionID == sess.ID && msg.Role == message.Assistant && len(msg.Parts) > 0 {
-				stopSpinner()
-
-				content := msg.Content().String()
-				readBytes := messageReadBytes[msg.ID]
-
-				if len(content) < readBytes {
-					slog.Error("Non-interactive: message content is shorter than read bytes", "message_length", len(content), "read_bytes", readBytes)
-					return fmt.Errorf("message content is shorter than read bytes: %d < %d", len(content), readBytes)
-				}
-
-				part := content[readBytes:]
-				fmt.Print(part)
-				messageReadBytes[msg.ID] = len(content)
-			}
-
-		case <-ctx.Done():
-			stopSpinner()
-			return ctx.Err()
-		}
-	}
-}
-
-func (app *App) UpdateAgentModel() error {
-	return app.CoderAgent.UpdateModel()
-}
-
-func (app *App) setupEvents() {
-	ctx, cancel := context.WithCancel(app.globalCtx)
-	app.eventsCtx = ctx
-	setupSubscriber(ctx, app.serviceEventsWG, "sessions", app.Sessions.Subscribe, app.events)
-	setupSubscriber(ctx, app.serviceEventsWG, "messages", app.Messages.Subscribe, app.events)
-	setupSubscriber(ctx, app.serviceEventsWG, "permissions", app.Permissions.Subscribe, app.events)
-	setupSubscriber(ctx, app.serviceEventsWG, "permissions-notifications", app.Permissions.SubscribeNotifications, app.events)
-	setupSubscriber(ctx, app.serviceEventsWG, "history", app.History.Subscribe, app.events)
-	setupSubscriber(ctx, app.serviceEventsWG, "mcp", agent.SubscribeMCPEvents, app.events)
-	setupSubscriber(ctx, app.serviceEventsWG, "lsp", SubscribeLSPEvents, app.events)
-	cleanupFunc := func() error {
-		cancel()
-		app.serviceEventsWG.Wait()
-		return nil
-	}
-	app.cleanupFuncs = append(app.cleanupFuncs, cleanupFunc)
-}
-
-func setupSubscriber[T any](
-	ctx context.Context,
-	wg *sync.WaitGroup,
-	name string,
-	subscriber func(context.Context) <-chan pubsub.Event[T],
-	outputCh chan<- tea.Msg,
-) {
-	wg.Go(func() {
-		subCh := subscriber(ctx)
-		for {
-			select {
-			case event, ok := <-subCh:
-				if !ok {
-					slog.Debug("subscription channel closed", "name", name)
-					return
-				}
-				var msg tea.Msg = event
-				select {
-				case outputCh <- msg:
-				case <-time.After(2 * time.Second):
-					slog.Warn("message dropped due to slow consumer", "name", name)
-				case <-ctx.Done():
-					slog.Debug("subscription cancelled", "name", name)
-					return
-				}
-			case <-ctx.Done():
-				slog.Debug("subscription cancelled", "name", name)
-				return
-			}
-		}
-	})
-}
-
-func (app *App) InitCoderAgent() error {
-	coderAgentCfg := app.config.Agents["coder"]
-	if coderAgentCfg.ID == "" {
-		return fmt.Errorf("coder agent configuration is missing")
-	}
-	var err error
-	app.CoderAgent, err = agent.NewAgent(
-		app.globalCtx,
-		coderAgentCfg,
-		app.Permissions,
-		app.Sessions,
-		app.Messages,
-		app.History,
-		app.LSPClients,
-	)
-	if err != nil {
-		slog.Error("Failed to create coder agent", "err", err)
-		return err
-	}
-
-	// Add MCP client cleanup to shutdown process
-	app.cleanupFuncs = append(app.cleanupFuncs, agent.CloseMCPClients)
-
-	setupSubscriber(app.eventsCtx, app.serviceEventsWG, "coderAgent", app.CoderAgent.Subscribe, app.events)
-	return nil
+func (a *App) Config() *config.Config {
+	return a.config
 }
 
 // Subscribe sends events to the TUI as tea.Msgs.
-func (app *App) Subscribe(program *tea.Program) {
-	defer log.RecoverPanic("app.Subscribe", func() {
-		slog.Info("TUI subscription panic: attempting graceful shutdown")
-		program.Quit()
-	})
+func (a *App) Subscribe(program *tea.Program) {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Info("TUI subscription panic: attempting graceful shutdown")
+			program.Quit()
+		}
+	}()
 
-	app.tuiWG.Add(1)
-	tuiCtx, tuiCancel := context.WithCancel(app.globalCtx)
-	app.cleanupFuncs = append(app.cleanupFuncs, func() error {
+	a.tuiWG.Add(1)
+	tuiCtx, tuiCancel := context.WithCancel(a.globalCtx)
+	a.cleanupFuncs = append(a.cleanupFuncs, func() error {
 		slog.Debug("Cancelling TUI message handler")
 		tuiCancel()
-		app.tuiWG.Wait()
+		a.tuiWG.Wait()
 		return nil
 	})
-	defer app.tuiWG.Done()
+	defer a.tuiWG.Done()
 
 	for {
 		select {
 		case <-tuiCtx.Done():
 			slog.Debug("TUI message handler shutting down")
 			return
-		case msg, ok := <-app.events:
+		case msg, ok := <-a.events:
 			if !ok {
 				slog.Debug("TUI message channel closed")
 				return
@@ -395,26 +211,204 @@ func (app *App) Subscribe(program *tea.Program) {
 }
 
 // Shutdown performs a graceful shutdown of the application.
-func (app *App) Shutdown() {
-	if app.CoderAgent != nil {
-		app.CoderAgent.CancelAll()
+func (a *App) Shutdown() {
+	// Cancel all agent managers
+	for sessionID, manager := range a.AgentManagers.Seq2() {
+		manager.Cancel(sessionID)
 	}
 
 	// Shutdown all LSP clients.
-	for name, client := range app.LSPClients.Seq2() {
-		shutdownCtx, cancel := context.WithTimeout(app.globalCtx, 5*time.Second)
+	for name, client := range a.LSPClients.Seq2() {
+		shutdownCtx, cancel := context.WithTimeout(a.globalCtx, 5*time.Second)
 		if err := client.Close(shutdownCtx); err != nil {
 			slog.Error("Failed to shutdown LSP client", "name", name, "error", err)
 		}
 		cancel()
 	}
 
-	// Call call cleanup functions.
-	for _, cleanup := range app.cleanupFuncs {
+	// Call cleanup functions.
+	for _, cleanup := range a.cleanupFuncs {
 		if cleanup != nil {
 			if err := cleanup(); err != nil {
 				slog.Error("Failed to cleanup app properly on shutdown", "error", err)
 			}
 		}
 	}
+}
+
+// RunNonInteractive runs the agent in non-interactive mode.
+func (a *App) RunNonInteractive(ctx context.Context, prompt string, quiet bool) error {
+	// Create a temporary session for this interaction
+	sess, err := a.Sessions.Create(ctx, "Non-interactive Session")
+	if err != nil {
+		return fmt.Errorf("failed to create session: %w", err)
+	}
+
+	// Get the default agent manager for this session
+	manager, err := a.GetAgentManager(sess.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get agent manager: %w", err)
+	}
+
+	// Run the agent
+	events, err := manager.Run(ctx, prompt)
+	if err != nil {
+		return fmt.Errorf("failed to run agent: %w", err)
+	}
+
+	// Process events
+	for event := range events {
+		switch event.Type {
+		case agent.AgentEventTypeResponse:
+			if !quiet {
+				fmt.Print(event.Message.Content())
+			}
+		case agent.AgentEventTypeError:
+			return fmt.Errorf("agent error: %w", event.Error)
+		}
+	}
+
+	return nil
+}
+
+// InitCoderAgent initializes the coder agent for backwards compatibility.
+func (a *App) InitCoderAgent() error {
+	if a.coderAgent != nil {
+		return nil // Already initialized
+	}
+	
+	// Create a dummy session ID for backwards compatibility
+	sessionID := "legacy-coder"
+	manager, err := a.GetAgentManager(sessionID)
+	if err != nil {
+		return fmt.Errorf("failed to get agent manager: %w", err)
+	}
+
+	// Get active agent from manager
+	agentID := manager.ActiveAgentID()
+	if agentID == "" {
+		// Try to get "coder" agent as default
+		if err := manager.SwitchAgent("coder"); err != nil {
+			return fmt.Errorf("failed to switch to coder agent: %w", err)
+		}
+		agentID = "coder"
+	}
+
+	// Verify agent was actually loaded
+	if agentID == "" {
+		return fmt.Errorf("no agent could be activated")
+	}
+
+	// Create a wrapper that delegates to manager
+	wrapper := &legacyAgentWrapper{manager: manager, sessionID: sessionID}
+	a.coderAgent = wrapper
+	a.CoderAgent = wrapper
+	return nil
+}
+// UpdateAgentModel updates model for legacy coder agent.
+func (a *App) UpdateAgentModel() error {
+	// This method is kept for compatibility but doesn't need to do anything
+	// since models are handled by individual agents in new architecture
+	return nil
+}
+
+// CoderAgent returns a legacy interface for compatibility with existing TUI code.
+// This creates a single agent manager for backwards compatibility.
+func (a *App) GetCoderAgent() agent.Service {
+	if a.CoderAgent != nil {
+		return a.CoderAgent // Already initialized
+	}
+	
+	// Create a dummy session ID for backwards compatibility
+	sessionID := "legacy-coder"
+	manager, err := a.GetAgentManager(sessionID)
+	if err != nil {
+		return nil
+	}
+
+	// Get active agent from manager
+	agentID := manager.ActiveAgentID()
+	if agentID == "" {
+		// Try to get "coder" agent as default
+		if err := manager.SwitchAgent("coder"); err != nil {
+			return nil
+		}
+	}
+
+	// Create a wrapper that delegates to manager
+	wrapper := &legacyAgentWrapper{manager: manager, sessionID: sessionID}
+	a.CoderAgent = wrapper
+	return wrapper
+}
+// legacyAgentWrapper provides backwards compatibility with the old single-agent interface
+type legacyAgentWrapper struct {
+	manager   *multiagent.Manager
+	sessionID string
+}
+
+func (w *legacyAgentWrapper) Run(ctx context.Context, sessionID string, content string, attachments ...message.Attachment) (<-chan agent.AgentEvent, error) {
+	return w.manager.Run(ctx, content, attachments...)
+}
+
+func (w *legacyAgentWrapper) Cancel(sessionID string) {
+	w.manager.Cancel(w.sessionID)
+}
+
+func (w *legacyAgentWrapper) CancelAll() {
+	w.manager.Cancel(w.sessionID)
+}
+
+func (w *legacyAgentWrapper) Subscribe(ctx context.Context) <-chan pubsub.Event[agent.AgentEvent] {
+	// Get the active agent and forward its events
+	activeAgent, err := w.manager.CurrentAgent()
+	if err != nil || activeAgent == nil {
+		// Return a closed channel if no active agent
+		ch := make(chan pubsub.Event[agent.AgentEvent])
+		close(ch)
+		return ch
+	}
+	
+	// Forward events from the active agent
+	return activeAgent.Subscribe(ctx)
+}
+func (w *legacyAgentWrapper) UpdateModel() error {
+	// This method may not be needed in the new architecture
+	return nil
+}
+
+func (w *legacyAgentWrapper) Model() catwalk.Model {
+	// Get model from active agent
+	activeAgent, err := w.manager.CurrentAgent()
+	if err != nil || activeAgent == nil {
+		return catwalk.Model{}
+	}
+	return activeAgent.Model()
+}
+
+func (w *legacyAgentWrapper) IsBusy() bool {
+	if w.manager == nil {
+		return false
+	}
+	return w.manager.IsBusy()
+}
+
+func (w *legacyAgentWrapper) IsSessionBusy(sessionID string) bool {
+	if w.manager == nil {
+		return false
+	}
+	return w.manager.IsBusy()
+}
+
+func (w *legacyAgentWrapper) Summarize(ctx context.Context, sessionID string) error {
+	// This would need to be implemented properly
+	return fmt.Errorf("summarize not implemented in legacy wrapper")
+}
+
+func (w *legacyAgentWrapper) QueuedPrompts(sessionID string) int {
+	// Return 0 for now - this would need to be implemented properly
+	return 0
+}
+
+func (w *legacyAgentWrapper) ClearQueue(sessionID string) {
+	// This would need to be implemented properly
 }

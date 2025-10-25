@@ -158,7 +158,10 @@ func TestAgentYAMLConfigToAgent(t *testing.T) {
 					"server1": {"tool1"},
 				},
 			},
-			LSP: AgentLSPConfig{
+			Subagents: AgentSubagentsConfig{
+				Allowed: []string{"task"},
+				Default: "task",
+			},			LSP: AgentLSPConfig{
 				Allowed: []string{"rust-analyzer"},
 			},
 			ContextPaths: []string{".cursorrules"},

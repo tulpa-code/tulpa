@@ -195,7 +195,7 @@ func (a *appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a, a.handleWindowResize(a.wWidth, a.wHeight)
 	// Model Switch
 	case models.ModelSelectedMsg:
-		if a.app.CoderAgent.IsBusy() {
+		if a.app != nil && a.app.CoderAgent != nil && a.app.CoderAgent.IsBusy() {
 			return a, util.ReportWarn("Agent is busy, please wait...")
 		}
 
@@ -485,7 +485,7 @@ func (a *appModel) handleKeyPressMsg(msg tea.KeyPressMsg) tea.Cmd {
 		)
 		return tea.Sequence(cmds...)
 	case key.Matches(msg, a.keyMap.Suspend):
-		if a.app.CoderAgent != nil && a.app.CoderAgent.IsBusy() {
+		if a.app != nil && a.app.CoderAgent != nil && a.app.CoderAgent.IsBusy() {
 			return util.ReportWarn("Agent is busy, please wait...")
 		}
 		return tea.Suspend
@@ -505,7 +505,7 @@ func (a *appModel) handleKeyPressMsg(msg tea.KeyPressMsg) tea.Cmd {
 
 // moveToPage handles navigation between different pages in the application.
 func (a *appModel) moveToPage(pageID page.PageID) tea.Cmd {
-	if a.app.CoderAgent.IsBusy() {
+	if a.app != nil && a.app.CoderAgent != nil && a.app.CoderAgent.IsBusy() {
 		// TODO: maybe remove this :  For now we don't move to any page if the agent is busy
 		return util.ReportWarn("Agent is busy, please wait...")
 	}
@@ -603,7 +603,7 @@ func (a *appModel) View() tea.View {
 	view.Layer = canvas
 	view.Cursor = cursor
 	view.ProgressBar = tea.NewProgressBar(tea.ProgressBarNone, 0)
-	if a.app.CoderAgent.IsBusy() {
+	if a.app != nil && a.app.CoderAgent != nil && a.app.CoderAgent.IsBusy() {
 		// use a random percentage to prevent the ghostty from hiding it after
 		// a timeout.
 		view.ProgressBar = tea.NewProgressBar(tea.ProgressBarIndeterminate, rand.Intn(100))

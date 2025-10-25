@@ -18,6 +18,12 @@ import (
 	"github.com/tulpa-code/tulpa/internal/tui/util"
 )
 
+// AgentChangedMsg is sent when active agent changes
+type AgentChangedMsg struct {
+	AgentID   string
+	SessionID string
+}
+
 type Header interface {
 	util.Model
 	SetSession(session session.Session) tea.Cmd
@@ -27,10 +33,11 @@ type Header interface {
 }
 
 type header struct {
-	width       int
-	session     session.Session
-	lspClients  *csync.Map[string, *lsp.Client]
-	detailsOpen bool
+	width          int
+	session        session.Session
+	lspClients     *csync.Map[string, *lsp.Client]
+	detailsOpen    bool
+	currentAgentID string
 }
 
 func New(lspClients *csync.Map[string, *lsp.Client]) Header {
@@ -51,6 +58,10 @@ func (h *header) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if h.session.ID == msg.Payload.ID {
 				h.session = msg.Payload
 			}
+		}
+	case AgentChangedMsg:
+		if h.session.ID == msg.SessionID {
+			h.currentAgentID = msg.AgentID
 		}
 	}
 	return h, nil
@@ -119,7 +130,19 @@ func (h *header) details(availWidth int) string {
 		parts = append(parts, s.Error.Render(fmt.Sprintf("%s%d", styles.ErrorIcon, errorCount)))
 	}
 
-	agentCfg := config.Get().Agents["coder"]
+	// Use current agent ID if available, otherwise fall back to "coder"
+	agentID := h.currentAgentID
+	if agentID == "" {
+		agentID = "coder" // fallback for backwards compatibility
+	}
+	
+	cfg := config.Get()
+	agentCfg := cfg.Agents[agentID]
+	if agentCfg.Model == "" {
+		// fallback to coder if agent not found
+		agentCfg = cfg.Agents["coder"]
+	}
+	
 	model := config.Get().GetModelByType(agentCfg.Model)
 	percentage := (float64(h.session.CompletionTokens+h.session.PromptTokens) / float64(model.ContextWindow)) * 100
 	formattedPercentage := s.Muted.Render(fmt.Sprintf("%d%%", int(percentage)))

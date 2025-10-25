@@ -127,9 +127,14 @@ var (
 	_ json.Marshaler   = &Map[string, any]{}
 )
 
-func (Map[K, V]) JSONSchemaAlias() any { //nolint
-	m := map[K]V{}
-	return m
+func (m *Map[K, V]) JSONSchemaAlias() any { //nolint
+	result := make(map[K]V)
+	m.mu.RLock()
+	for k, v := range m.inner {
+		result[k] = v
+	}
+	m.mu.RUnlock()
+	return result
 }
 
 // UnmarshalJSON implements json.Unmarshaler.

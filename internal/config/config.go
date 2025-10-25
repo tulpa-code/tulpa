@@ -257,6 +257,13 @@ type Agent struct {
 
 	// Overrides the context paths for this agent
 	ContextPaths []string `json:"context_paths,omitempty"`
+
+	// The list of subagents that this agent can use
+	//  if this is nil, no subagents are available
+	AllowedSubagents []string `json:"allowed_subagents,omitempty"`
+
+	// The default subagent to use for this agent
+	DefaultSubagent string `json:"default_subagent,omitempty"`
 }
 
 type Tools struct {

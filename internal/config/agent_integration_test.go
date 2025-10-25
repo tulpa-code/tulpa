@@ -148,12 +148,14 @@ tools:
 		require.NoError(t, err)
 
 		// Create agent without context paths
-		agent := `name: No Context Agent
+	agent := `name: No Context Agent
 prompt: Test
+subagents:
+  allowed:
+    - task
+  default: task
 `
-		err = os.WriteFile(filepath.Join(agentsDir, "no-context.yaml"), []byte(agent), 0o644)
-		require.NoError(t, err)
-
+	err = os.WriteFile(filepath.Join(agentsDir, "no-context.yaml"), []byte(agent), 0o644)
 		cfg := &Config{
 			Options: &Options{
 				ContextPaths: []string{".cursorrules", "TULPA.md"},

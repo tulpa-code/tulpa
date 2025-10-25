@@ -211,7 +211,7 @@ func (m *editorCmp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case commands.OpenExternalEditorMsg:
-		if m.app.CoderAgent.IsSessionBusy(m.session.ID) {
+		if m.app.CoderAgent != nil && m.app.CoderAgent.IsSessionBusy(m.session.ID) {
 			return m, util.ReportWarn("Agent is working, please wait...")
 		}
 		return m, m.openEditor(m.textarea.Value())
@@ -297,7 +297,7 @@ func (m *editorCmp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 		if key.Matches(msg, m.keyMap.OpenEditor) {
-			if m.app.CoderAgent.IsSessionBusy(m.session.ID) {
+			if m.app.CoderAgent != nil && m.app.CoderAgent.IsSessionBusy(m.session.ID) {
 				return m, util.ReportWarn("Agent is working, please wait...")
 			}
 			return m, m.openEditor(m.textarea.Value())

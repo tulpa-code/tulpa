@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/charmbracelet/bubbles/v2/help"
@@ -46,6 +47,15 @@ type (
 		Focused bool
 	}
 	CancelTimerExpiredMsg struct{}
+	SwitchToAgentMsg struct {
+		AgentID string
+	}
+	CycleNextAgentMsg struct{}
+	CyclePreviousAgentMsg struct{}
+	AgentChangedMsg struct {
+		AgentID string
+		SessionID string
+	}
 )
 
 type PanelType string
@@ -131,6 +141,12 @@ func New(app *app.App) ChatPage {
 }
 
 func (p *chatPage) Init() tea.Cmd {
+	// TODO: Fix multi-agent initialization crash
+	// Temporarily skip agent initialization to debug TUI crash
+	// if err := p.app.InitCoderAgent(); err != nil {
+	// 	return util.ReportError(err)
+	// }
+
 	cfg := config.Get()
 	compact := cfg.Options.TUI.CompactMode
 	p.compact = compact
@@ -300,6 +316,15 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		}
 		return p, tea.Batch(cmds...)
+	case AgentChangedMsg:
+		// Forward agent change to components that need it
+		u, cmd := p.sidebar.Update(msg)
+		p.sidebar = u.(sidebar.Sidebar)
+		cmds = append(cmds, cmd)
+		u, cmd = p.header.Update(msg)
+		p.header = u.(header.Header)
+		cmds = append(cmds, cmd)
+		return p, tea.Batch(cmds...)
 	case pubsub.Event[message.Message],
 		anim.StepMsg,
 		spinner.TickMsg:
@@ -331,7 +356,7 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return p, tea.Batch(cmds...)
 
 	case commands.CommandRunCustomMsg:
-		if p.app.CoderAgent.IsBusy() {
+		if p.app.CoderAgent != nil && p.app.CoderAgent.IsBusy() {
 			return p, util.ReportWarn("Agent is busy, please wait before executing a command...")
 		}
 
@@ -346,16 +371,12 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			p.splashFullScreen = true
 			return p, p.SetSize(p.width, p.height)
 		}
-		err := p.app.InitCoderAgent()
-		if err != nil {
-			return p, util.ReportError(err)
-		}
 		p.isOnboarding = false
 		p.isProjectInit = false
 		p.focusedPane = PanelTypeEditor
 		return p, p.SetSize(p.width, p.height)
 	case commands.NewSessionsMsg:
-		if p.app.CoderAgent.IsBusy() {
+		if p.app.CoderAgent != nil && p.app.CoderAgent.IsBusy() {
 			return p, util.ReportWarn("Agent is busy, please wait before starting a new session...")
 		}
 		return p, p.newSession()
@@ -366,7 +387,7 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if p.app.CoderAgent == nil {
 				return p, nil
 			}
-			if p.app.CoderAgent.IsBusy() {
+			if p.app.CoderAgent != nil && p.app.CoderAgent.IsBusy() {
 				return p, util.ReportWarn("Agent is busy, please wait before starting a new session...")
 			}
 			return p, p.newSession()
@@ -943,7 +964,16 @@ func (p *chatPage) Help() help.KeyMap {
 				key.NewBinding(
 					key.WithKeys("ctrl+n"),
 					key.WithHelp("ctrl+n", "new sessions"),
-				))
+				),
+				// Agent switching bindings
+				p.keyMap.NextAgent,
+				p.keyMap.PreviousAgent,
+				p.keyMap.Agent1,
+				p.keyMap.Agent2,
+				p.keyMap.Agent3,
+				p.keyMap.Agent4,
+				p.keyMap.Agent5,
+			)
 		}
 		shortList = append(shortList,
 			// Commands
@@ -1098,4 +1128,129 @@ func (p *chatPage) isMouseOverChat(x, y int) bool {
 
 	// Check if mouse coordinates are within chat bounds
 	return x >= chatX && x < chatX+chatWidth && y >= chatY && y < chatY+chatHeight
+}
+
+// Agent switching methods
+func (p *chatPage) cycleNextAgent() tea.Cmd {
+	if p.session.ID == "" {
+		return nil
+	}
+
+	cfg := config.Get()
+	agentManager, err := p.app.GetAgentManager(p.session.ID)
+	if err != nil {
+		return util.ReportError(fmt.Errorf("failed to get agent manager: %w", err))
+	}
+
+	// Get the list of available agents
+	var availableAgents []string
+	for _, agentID := range agentManager.AvailableAgents() {
+		if slices.Contains(cfg.Agents[agentManager.ActiveAgentID()].AllowedSubagents, agentID) {
+			availableAgents = append(availableAgents, agentID)
+		}
+	}
+
+	if len(availableAgents) <= 1 {
+		return util.ReportWarn("No other agents available to switch to")
+	}
+
+	// Cycle to next agent
+	if err := agentManager.CycleNext(); err != nil {
+		return util.ReportError(fmt.Errorf("failed to cycle to next agent: %w", err))
+	}
+
+	// Update components to reflect the new agent
+	p.updateComponentsForAgentSwitch()
+
+	activeAgentID := agentManager.ActiveAgentID()
+	return util.ReportInfo(fmt.Sprintf("Switched to agent: %s", activeAgentID))
+}
+
+func (p *chatPage) cyclePreviousAgent() tea.Cmd {
+	if p.session.ID == "" {
+		return nil
+	}
+
+	cfg := config.Get()
+	agentManager, err := p.app.GetAgentManager(p.session.ID)
+	if err != nil {
+		return util.ReportError(fmt.Errorf("failed to get agent manager: %w", err))
+	}
+
+	// Get the list of available agents
+	var availableAgents []string
+	for _, agentID := range agentManager.AvailableAgents() {
+		if slices.Contains(cfg.Agents[agentManager.ActiveAgentID()].AllowedSubagents, agentID) {
+			availableAgents = append(availableAgents, agentID)
+		}
+	}
+
+	if len(availableAgents) <= 1 {
+		return util.ReportWarn("No other agents available to switch to")
+	}
+
+	// Cycle to previous agent
+	if err := agentManager.CyclePrevious(); err != nil {
+		return util.ReportError(fmt.Errorf("failed to cycle to previous agent: %w", err))
+	}
+
+	// Update components to reflect the new agent
+	p.updateComponentsForAgentSwitch()
+
+	activeAgentID := agentManager.ActiveAgentID()
+	return util.ReportInfo(fmt.Sprintf("Switched to agent: %s", activeAgentID))
+}
+
+func (p *chatPage) switchToAgentByIndex(index int) tea.Cmd {
+	if p.session.ID == "" {
+		return nil
+	}
+
+	cfg := config.Get()
+	agentManager, err := p.app.GetAgentManager(p.session.ID)
+	if err != nil {
+		return util.ReportError(fmt.Errorf("failed to get agent manager: %w", err))
+	}
+
+	// Get the list of available agents
+	var availableAgents []string
+	for _, agentID := range agentManager.AvailableAgents() {
+		if slices.Contains(cfg.Agents[agentManager.ActiveAgentID()].AllowedSubagents, agentID) {
+			availableAgents = append(availableAgents, agentID)
+		}
+	}
+
+	if index >= len(availableAgents) {
+		return util.ReportWarn(fmt.Sprintf("Agent index %d not available", index+1))
+	}
+
+	targetAgentID := availableAgents[index]
+	
+	// Switch to the specified agent
+	if err := agentManager.SwitchAgent(targetAgentID); err != nil {
+		return util.ReportError(fmt.Errorf("failed to switch to agent %s: %w", targetAgentID, err))
+	}
+
+	// Update components to reflect the new agent
+	p.updateComponentsForAgentSwitch()
+
+	return util.ReportInfo(fmt.Sprintf("Switched to agent: %s", targetAgentID))
+}
+
+func (p *chatPage) updateComponentsForAgentSwitch() tea.Cmd {
+	// Get the current agent ID
+	agentManager, err := p.app.GetAgentManager(p.session.ID)
+	if err != nil {
+		return util.ReportError(fmt.Errorf("failed to get agent manager: %w", err))
+	}
+	
+	activeAgentID := agentManager.ActiveAgentID()
+	
+	// Send agent changed message to components
+	return func() tea.Msg {
+		return AgentChangedMsg{
+			AgentID:   activeAgentID,
+			SessionID: p.session.ID,
+		}
+	}
 }

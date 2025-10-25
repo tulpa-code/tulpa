@@ -31,6 +31,12 @@ import (
 	"golang.org/x/text/language"
 )
 
+// AgentChangedMsg is sent when the active agent changes
+type AgentChangedMsg struct {
+	AgentID   string
+	SessionID string
+}
+
 type FileHistory struct {
 	initialVersion history.File
 	latestVersion  history.File
@@ -72,6 +78,7 @@ type sidebarCmp struct {
 	compactMode   bool
 	history       history.Service
 	files         *csync.Map[string, SessionFile]
+	currentAgentID string
 }
 
 func New(history history.Service, lspClients *csync.Map[string, *lsp.Client], compact bool) Sidebar {
@@ -105,6 +112,10 @@ func (m *sidebarCmp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.session.ID == msg.Payload.ID {
 				m.session = msg.Payload
 			}
+		}
+	case AgentChangedMsg:
+		if m.session.ID == msg.SessionID {
+			m.currentAgentID = msg.AgentID
 		}
 	}
 	return m, nil
@@ -532,7 +543,18 @@ func formatTokensAndCost(tokens, contextWindow int64, cost float64) string {
 
 func (s *sidebarCmp) currentModelBlock() string {
 	cfg := config.Get()
-	agentCfg := cfg.Agents["coder"]
+	
+	// Use current agent ID if available, otherwise fall back to "coder"
+	agentID := s.currentAgentID
+	if agentID == "" {
+		agentID = "coder" // fallback for backwards compatibility
+	}
+	
+	agentCfg := cfg.Agents[agentID]
+	if agentCfg.Model == "" {
+		// fallback to coder if agent not found
+		agentCfg = cfg.Agents["coder"]
+	}
 
 	selectedModel := cfg.Models[agentCfg.Model]
 
